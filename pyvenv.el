@@ -125,5 +125,9 @@
                    (string-lessp (downcase a)
                                  (downcase b))))))
 
+;; Local Variables:
+;; lexical-binding: t
+;; End:
+
 (provide 'pyvenv)
 ;;; pyvenv.el ends here
