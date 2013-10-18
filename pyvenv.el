@@ -29,6 +29,10 @@
 ;; `pyvenv-workon', which queries for a virtual environment in
 ;; $WORKON_HOME (from virtualenvwrapper.sh).
 
+;; If you want your inferior Python processes to be restarted
+;; automatically when you switch your virtual environment, add
+;; `pyvenv-restart-python' to `pyvenv-post-activate-hooks'.
+
 ;;; Code:
 
 ;; API for other libraries or user customization.
@@ -175,6 +179,30 @@ Will show the current virtual env in the mode line, and respect a
     (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
                             pyvenv-workon pyvenv-virtual-env))
       (virtualenv-workon pyvenv-workon)))))
+
+(defun pyvenv-restart-python ()
+  "Restart Python inferior processes."
+  (interactive)
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (and (eq major-mode 'inferior-python-mode)
+                 (get-buffer-process buf))
+        (let ((cmd (combine-and-quote-strings (process-command
+                                               (get-buffer-process buf))))
+              (dedicated (if (string-match "\\[.*\\]$" (buffer-name buf))
+                             t
+                           nil))
+              (show nil))
+          (delete-process (get-buffer-process buf))
+          (goto-char (point-max))
+          (insert "\n\n"
+                  "###\n"
+                  (format "### Restarting in virtual env %s (%s)\n"
+                          pyvenv-virtual-env-name pyvenv-virtual-env)
+                  "###\n"
+                  "\n\n")
+          (run-python cmd dedicated show)
+          (goto-char (point-max)))))))
 
 ;; Local Variables:
 ;; lexical-binding: t
