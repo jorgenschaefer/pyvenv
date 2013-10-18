@@ -25,6 +25,7 @@
     (let* ((process-environment process-environment)
            (exec-path exec-path)
            (pyvenv-virtual-env nil)
+           (pyvenv-virtual-env-name nil)
            (pyvenv-old-process-environment nil)
            (pyvenv-old-exec-path nil)
            (pre-activate-venv nil)
@@ -41,6 +42,7 @@
       (should (equal pre-activate-venv tmpdir))
       (should (equal post-activate-venv tmpdir))
       (should (equal pyvenv-virtual-env tmpdir))
+      (should (equal pyvenv-virtual-env-name (file-name-base tmpdir)))
       (should (equal (getenv "VIRTUAL_ENV")
                      tmpdir))
       (should (string-match (format "^%s/bin" (regexp-quote tmpdir))
@@ -72,6 +74,7 @@
       (should (equal process-environment orig-process-environment))
       (should (equal exec-path orig-exec-path))
       (should (equal pyvenv-virtual-env nil))
+      (should (equal pyvenv-virtual-env-name nil))
       (with-temp-virtualenv venv2
         ;; Should retain the originals, too.
         (pyvenv-activate venv1)
@@ -82,7 +85,8 @@
         (should (equal post-deactivate-venv venv2))
         (should (equal process-environment orig-process-environment))
         (should (equal exec-path orig-exec-path))
-        (should (equal pyvenv-virtual-env nil))))))
+        (should (equal pyvenv-virtual-env nil))
+        (should (equal pyvenv-virtual-env-name nil))))))
 
 (ert-deftest pyvenv-virtualenv-list ()
   "Ensure all correct virtualenvs are returned"

@@ -31,28 +31,52 @@
 
 ;;; Code:
 
-(defvar pyvenv-virtual-env nil
-  "The current virtual environment.")
+;; API for other libraries or user customization.
 
-(defcustom pyvenv-pre-activate-hooks nil
+(defvar pyvenv-virtual-env nil
+  "The current virtual environment.
+
+Do not set this variable directly; use `pyvenv-activate' or
+`pyvenv-workon'.")
+
+(defvar pyvenv-virtual-env-name nil
+  "The name of the current virtual environment.
+
+This is usually the base name of `pyvenv-virtual-env'.")
+
+(defvar pyvenv-pre-activate-hooks nil
   "Hooks run before a virtual environment is activated.
 
 `pyvenv-virtual-env' is already set.")
 
-(defcustom pyvenv-post-activate-hooks nil
+(defvar pyvenv-post-activate-hooks nil
   "Hooks run after a virtual environment is activated.
 
 `pyvenv-virtual-env' is set.")
 
-(defcustom pyvenv-pre-deactivate-hooks nil
+(defvar pyvenv-pre-deactivate-hooks nil
   "Hooks run before a virtual environment is deactivated.
 
 `pyvenv-virtual-env' is set.")
 
-(defcustom pyvenv-post-deactivate-hooks nil
+(defvar pyvenv-post-deactivate-hooks nil
   "Hooks run after a virtual environment is deactivated.
 
 `pyvenv-virtual-env' is still set.")
+
+(defvar pyvenv-workon nil
+  "A variable requesting a specific virtualenv.
+
+This is meant to be set in file- or directory-local variables.
+
+When `pyvenv-mode' is enabled, pyvenv will switch to this
+virtualenv. If a virtualenv is already enabled, it will ask first.")
+
+(defcustom pyvenv-mode-line-indicator '(pyvenv-virtual-env-name
+                                        ("[" pyvenv-virtual-env-name "] "))
+  "How `pyvenv-mode' will indicate the current environment in the mode line.")
+
+;; Internal code.
 
 (defvar pyvenv-old-process-environment nil
   "The old process environment before the last activate.")
@@ -65,7 +89,8 @@
   (interactive "DActivate venv: ")
   (setq directory (expand-file-name directory))
   (pyvenv-deactivate)
-  (setq pyvenv-virtual-env directory)
+  (setq pyvenv-virtual-env directory
+        pyvenv-virtual-env-name (file-name-base directory))
   (run-hooks 'pyvenv-pre-activate-hooks)
   (setq pyvenv-old-process-environment process-environment
         pyvenv-old-exec-path exec-path
@@ -93,7 +118,8 @@
     (setq exec-path pyvenv-old-exec-path
           pyvenv-old-exec-path nil))
   (run-hooks 'pyvenv-post-deactivate-hooks)
-  (setq pyvenv-virtual-env nil))
+  (setq pyvenv-virtual-env nil
+        pyvenv-virtual-env-name nil))
 
 (defvar pyvenv-workon-history nil
   "Prompt history for `pyvenv-workon'.")
@@ -124,6 +150,31 @@
     (sort result (lambda (a b)
                    (string-lessp (downcase a)
                                  (downcase b))))))
+
+(define-minor-mode pyvenv-mode
+  "Global minor mode for pyvenv.
+
+Will show the current virtual env in the mode line, and respect a
+`pyvenv-workon' setting in files."
+  :global t
+  (cond
+   (pyvenv-mode
+    (add-to-list 'mode-line-misc-info pyvenv-mode-line-indicator)
+    (add-hook 'python-mode-hook 'pyvenv-set-file-virtualenv))
+   ((not pyvenv-mode)
+    (setq mode-line-misc-info (delete pyvenv-mode-line-indicator
+                                      mode-line-misc-info))
+    (remove-hook 'python-mode-hook 'pyvenv-set-file-virtualenv))))
+
+(defun pyvenv-set-file-virtualenv ()
+  "If `pyvenv-workon' is set, switch to that virtual env."
+  (cond
+   ((and pyvenv-workon (not pyvenv-virtual-env))
+    (virtualenv-workon pyvenv-workon))
+   ((and pyvenv-workon (not (equal pyvenv-workon pyvenv-virtual-env)))
+    (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
+                            pyvenv-workon pyvenv-virtual-env))
+      (virtualenv-workon pyvenv-workon)))))
 
 ;; Local Variables:
 ;; lexical-binding: t
