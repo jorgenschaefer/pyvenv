@@ -35,6 +35,8 @@
 
 ;;; Code:
 
+(require 'json)
+
 ;; API for other libraries or user customization.
 
 (defvar pyvenv-virtual-env nil
@@ -95,33 +97,57 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
   (pyvenv-deactivate)
   (setq pyvenv-virtual-env directory
         pyvenv-virtual-env-name (file-name-base directory))
+  ;; Preserve variables from being overwritten.
+  (let ((old-exec-path exec-path)
+        (old-process-environment process-environment))
+    (unwind-protect
+        (pyvenv-run-virtualenvwrapper-hook "pre_activate" pyvenv-virtual-env)
+      (setq exec-path old-exec-path
+            process-environment old-process-environment)))
   (run-hooks 'pyvenv-pre-activate-hooks)
-  (setq pyvenv-old-process-environment process-environment
-        pyvenv-old-exec-path exec-path
+  (setq pyvenv-old-exec-path exec-path
+        pyvenv-old-process-environment process-environment
+        ;; For some reason, Emacs adds some directories to `exec-path'
+        ;; but not to `process-environment'?
+        exec-path (cons (format "%s/bin" directory)
+                        exec-path)
         process-environment (append
                              (list
                               (format "VIRTUAL_ENV=%s" directory)
-                              (format "PATH=%s/bin:%s"
-                                      directory
-                                      (getenv "PATH"))
+                              (format "PATH=%s" (mapconcat (lambda (x)
+                                                             (or x "."))
+                                                           exec-path
+                                                           ":"))
                               ;; No "=" means to unset
                               "PYTHONHOME")
                              process-environment)
-        exec-path (cons (format "%s/bin" directory)
-                        exec-path))
+)
+  (pyvenv-run-virtualenvwrapper-hook "post_activate")
   (run-hooks 'pyvenv-post-activate-hooks))
 
 (defun pyvenv-deactivate ()
   "Deactivate any current virtual environment."
   (interactive)
-  (run-hooks 'pyvenv-pre-deactivate-hooks)
+  (when pyvenv-virtual-env
+    (pyvenv-run-virtualenvwrapper-hook "pre_deactivate")
+    (run-hooks 'pyvenv-pre-deactivate-hooks))
   (when pyvenv-old-process-environment
     (setq process-environment pyvenv-old-process-environment
           pyvenv-old-process-environment nil))
   (when pyvenv-old-exec-path
     (setq exec-path pyvenv-old-exec-path
           pyvenv-old-exec-path nil))
-  (run-hooks 'pyvenv-post-deactivate-hooks)
+  (when pyvenv-virtual-env
+    ;; Make sure this does not change `exec-path', as $PATH is
+    ;; different
+    (let ((old-exec-path exec-path)
+          (old-process-environment process-environment))
+      (unwind-protect
+          (pyvenv-run-virtualenvwrapper-hook "post_deactivate"
+                                             pyvenv-virtual-env)
+        (setq exec-path old-exec-path
+              process-environment old-process-environment)))
+    (run-hooks 'pyvenv-post-deactivate-hooks))
   (setq pyvenv-virtual-env nil
         pyvenv-virtual-env-name nil))
 
@@ -179,6 +205,64 @@ Will show the current virtual env in the mode line, and respect a
     (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
                             pyvenv-workon pyvenv-virtual-env))
       (virtualenv-workon pyvenv-workon)))))
+
+(defvar pyvenv-virtualenvwrapper-python
+  (or (getenv "VIRTUALENVWRAPPER_PYTHON")
+      (executable-find "python"))
+  "The python process which has access to the virtualenvwrapper module.
+
+This should be $VIRTUALENVWRAPPER_PYTHON outside of Emacs, but
+virtualenvwrapper.sh does not export that variable, so we do not
+usually see it.")
+
+(defun pyvenv-run-virtualenvwrapper-hook (hook &rest args)
+  "Run a virtualenvwrapper hook, and update the environment.
+
+This will run a virtualenvwrapper hook and update the local
+environment accordingly.
+
+CAREFUL! This will modify your `process-environment' and
+`exec-path'."
+  (when (getenv "VIRTUALENVWRAPPER_LOG_DIR")
+    (with-temp-buffer
+      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
+        (unwind-protect
+            (progn
+              (apply #'call-process
+                     pyvenv-virtualenvwrapper-python
+                     nil t nil
+                     "-c"
+                     "from virtualenvwrapper.hook_loader import main; main()"
+                     "--script" tmpfile
+                     (if (getenv "HOOK_VERBOSE_OPTION")
+                         (cons (getenv "HOOK_VERBOSE_OPTION")
+                               (cons hook args))
+                       (cons hook args)))
+              (call-process-shell-command
+               (format ". '%s' ; echo ; echo =-=-= ; python -c \"import os, json ; print json.dumps(dict(os.environ))\""
+                       tmpfile)
+               nil t nil))
+          (delete-file tmpfile)))
+      (goto-char (point-min))
+      (when (re-search-forward "\n=-=-=\n" nil t)
+        (let ((output (buffer-substring (point-min)
+                                        (match-beginning 0))))
+          (when (> (length output) 0)
+            (with-help-window "*Virtualenvwrapper Hook Output*"
+              (with-current-buffer "*Virtualenvwrapper Hook Output*"
+                (let ((inhibit-read-only t))
+                  (erase-buffer)
+                  (insert
+                   (format
+                    "Output from the virtualenvwrapper hook %s:\n\n"
+                    hook)
+                   output))))))
+        (dolist (binding (json-read))
+          (let ((env (format "%s=%s" (car binding) (cdr binding))))
+            (when (not (member env process-environment))
+              (setq process-environment (cons env process-environment))))
+          (when (eq (car binding) 'PATH)
+            (setq exec-path (split-string (cdr binding) ":"))))))))
 
 (defun pyvenv-restart-python ()
   "Restart Python inferior processes."
