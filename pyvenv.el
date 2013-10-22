@@ -288,5 +288,16 @@ CAREFUL! This will modify your `process-environment' and
           (run-python cmd dedicated show)
           (goto-char (point-max)))))))
 
+;;; Compatibility
+
+(when (not (fboundp 'file-name-base))
+  ;; Emacs 24.3
+  (defun file-name-base (&optional filename)
+    "Return the base name of the FILENAME: no directory, no extension.
+FILENAME defaults to `buffer-file-name'."
+    (file-name-sans-extension
+     (file-name-nondirectory (or filename (buffer-file-name)))))
+  )
+
 (provide 'pyvenv)
 ;;; pyvenv.el ends here
