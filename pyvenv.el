@@ -1,4 +1,4 @@
-;;; pyvenv.el --- Python virtual environment interface
+;;; pyvenv.el --- Python virtual environment interface -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013  Jorgen Schaefer <contact@jorgenschaefer.de>
 
@@ -287,10 +287,6 @@ CAREFUL! This will modify your `process-environment' and
                   "\n\n")
           (run-python cmd dedicated show)
           (goto-char (point-max)))))))
-
-;; Local Variables:
-;; lexical-binding: t
-;; End:
 
 (provide 'pyvenv)
 ;;; pyvenv.el ends here
