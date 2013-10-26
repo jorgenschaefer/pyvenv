@@ -78,9 +78,15 @@ This is meant to be set in file- or directory-local variables.
 When `pyvenv-mode' is enabled, pyvenv will switch to this
 virtualenv. If a virtualenv is already enabled, it will ask first.")
 
+(defgroup pyvenv nil
+  "Python Virtual Environment Interface."
+  :prefix "pyvenv-"
+  :group 'languages)
+
 (defcustom pyvenv-mode-line-indicator '(pyvenv-virtual-env-name
                                         ("[" pyvenv-virtual-env-name "] "))
-  "How `pyvenv-mode' will indicate the current environment in the mode line.")
+  "How `pyvenv-mode' will indicate the current environment in the mode line."
+  :group 'pyvenv)
 
 ;; Internal code.
 
@@ -121,7 +127,7 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
                               ;; No "=" means to unset
                               "PYTHONHOME")
                              process-environment)
-)
+        )
   (pyvenv-run-virtualenvwrapper-hook "post_activate")
   (run-hooks 'pyvenv-post-activate-hooks))
 
