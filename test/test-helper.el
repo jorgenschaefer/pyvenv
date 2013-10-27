@@ -1,6 +1,7 @@
 (require 'f)
 (add-to-list 'load-path (f-parent (f-dirname (f-this-file))))
 (require 'pyvenv)
+(require 'mocker)
 
 (defmacro with-temp-dir (name &rest body)
   (let ((var (make-symbol "temp-dir")))

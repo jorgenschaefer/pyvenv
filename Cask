@@ -6,4 +6,5 @@
 (package-file "pyvenv.el")
 
 (development
- (depends-on "ert-runner"))
+ (depends-on "ert-runner")
+ (depends-on "mocker"))
