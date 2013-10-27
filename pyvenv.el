@@ -166,7 +166,11 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
    (list
     (completing-read "Work on: " (pyvenv-virtualenv-list)
                      nil t nil 'pyvenv-workon-history nil nil)))
-  (when (not (equal name ""))
+  (when (not (or (equal name "")
+                 ;; Some completion frameworks can return nil for the
+                 ;; default, see
+                 ;; https://github.com/jorgenschaefer/elpy/issues/144
+                 (equal name nil)))
     (pyvenv-activate (format "%s/%s"
                              (or (getenv "WORKON_HOME")
                                  "~/.virtualenvs")
