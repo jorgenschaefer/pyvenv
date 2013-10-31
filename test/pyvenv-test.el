@@ -67,6 +67,11 @@
         (should (equal pyvenv-virtual-env nil))
         (should (equal pyvenv-virtual-env-name nil))))))
 
+;; Fixing a bug in dflet where it would not work in 24.3.1 for some
+;; reason.
+(when (version= emacs-version "24.3.1")
+  (require 'cl))
+
 (ert-deftest pyvenv-workon ()
   ;; Should expand the virtualenv directory then call activate.
   (mocker-let ((pyvenv-activate (dir)
