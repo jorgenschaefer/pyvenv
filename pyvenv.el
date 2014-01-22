@@ -96,6 +96,7 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
 (defvar pyvenv-old-exec-path nil
   "The old exec path before the last activate.")
 
+;;;###autoload
 (defun pyvenv-activate (directory)
   "Activate the virtual environment in DIRECTORY."
   (interactive "DActivate venv: ")
@@ -131,6 +132,7 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
   (pyvenv-run-virtualenvwrapper-hook "post_activate")
   (run-hooks 'pyvenv-post-activate-hooks))
 
+;;;###autoload
 (defun pyvenv-deactivate ()
   "Deactivate any current virtual environment."
   (interactive)
@@ -160,6 +162,7 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
 (defvar pyvenv-workon-history nil
   "Prompt history for `pyvenv-workon'.")
 
+;;;###autoload
 (defun pyvenv-workon (name)
   "Activate a virtual environment from $WORKON_HOME."
   (interactive
@@ -191,6 +194,7 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
                    (string-lessp (downcase a)
                                  (downcase b))))))
 
+;;;###autoload
 (define-minor-mode pyvenv-mode
   "Global minor mode for pyvenv.
 
@@ -274,6 +278,7 @@ CAREFUL! This will modify your `process-environment' and
           (when (eq (car binding) 'PATH)
             (setq exec-path (split-string (cdr binding) ":"))))))))
 
+;;;###autoload
 (defun pyvenv-restart-python ()
   "Restart Python inferior processes."
   (interactive)
