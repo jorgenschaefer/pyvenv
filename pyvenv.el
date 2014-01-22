@@ -214,11 +214,11 @@ Will show the current virtual env in the mode line, and respect a
   "If `pyvenv-workon' is set, switch to that virtual env."
   (cond
    ((and pyvenv-workon (not pyvenv-virtual-env))
-    (virtualenv-workon pyvenv-workon))
+    (pyvenv-workon pyvenv-workon))
    ((and pyvenv-workon (not (equal pyvenv-workon pyvenv-virtual-env)))
     (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
                             pyvenv-workon pyvenv-virtual-env))
-      (virtualenv-workon pyvenv-workon)))))
+      (pyvenv-workon pyvenv-workon)))))
 
 (defvar pyvenv-virtualenvwrapper-python
   (or (getenv "VIRTUALENVWRAPPER_PYTHON")
