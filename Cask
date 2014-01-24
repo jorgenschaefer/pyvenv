@@ -1,7 +1,7 @@
 (source gnu)
 (source melpa)
 
-(package "pyvenv" "1.0" "Python virtualenv support for Emacs")
+(package "pyvenv" "1.1" "Python virtualenv support for Emacs")
 
 (package-file "pyvenv.el")
 
