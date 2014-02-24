@@ -77,6 +77,7 @@ This is meant to be set in file- or directory-local variables.
 
 When `pyvenv-mode' is enabled, pyvenv will switch to this
 virtualenv. If a virtualenv is already enabled, it will ask first.")
+(put 'pyvenv-workon 'safe-local-variable #'stringp)
 
 (defgroup pyvenv nil
   "Python Virtual Environment Interface."
