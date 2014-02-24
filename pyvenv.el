@@ -204,11 +204,11 @@ Will show the current virtual env in the mode line, and respect a
   (cond
    (pyvenv-mode
     (add-to-list 'mode-line-misc-info pyvenv-mode-line-indicator)
-    (add-hook 'python-mode-hook 'pyvenv-set-file-virtualenv))
+    (add-hook 'hack-local-variables-hook #'pyvenv-set-file-virtualenv))
    ((not pyvenv-mode)
     (setq mode-line-misc-info (delete pyvenv-mode-line-indicator
                                       mode-line-misc-info))
-    (remove-hook 'python-mode-hook 'pyvenv-set-file-virtualenv))))
+    (remove-hook 'hack-local-variables-hook #'pyvenv-set-file-virtualenv))))
 
 (defun pyvenv-set-file-virtualenv ()
   "If `pyvenv-workon' is set, switch to that virtual env."
