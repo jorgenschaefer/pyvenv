@@ -216,7 +216,7 @@ Will show the current virtual env in the mode line, and respect a
   (cond
    ((and pyvenv-workon (not pyvenv-virtual-env))
     (pyvenv-workon pyvenv-workon))
-   ((and pyvenv-workon (not (equal pyvenv-workon pyvenv-virtual-env)))
+   ((and pyvenv-workon (not (equal pyvenv-workon pyvenv-virtual-env-name)))
     (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
                             pyvenv-workon pyvenv-virtual-env))
       (pyvenv-workon pyvenv-workon)))))
