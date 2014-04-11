@@ -188,8 +188,10 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
     (when (not (file-directory-p workon-home))
       (error "Can't find a workon home directory, set $WORKON_HOME"))
     (dolist (name (directory-files workon-home))
-      (when (file-exists-p (format "%s/%s/bin/activate"
-                                   workon-home name))
+      (when (or (file-exists-p (format "%s/%s/bin/activate"
+                                       workon-home name))
+                (file-exists-p (format "%s/%s/Scripts/activate.bat"
+                                       workon-home name)))
         (setq result (cons name result))))
     (sort result (lambda (a b)
                    (string-lessp (downcase a)
