@@ -15,8 +15,6 @@
            (pyvenv-post-activate-hooks
             (list (lambda ()
                     (setq post-activate-venv pyvenv-virtual-env)))))
-      (setq process-environment (cons "PYTHONHOME=/usr"
-                                      process-environment))
       (pyvenv-activate tmpdir)
       (should (equal pre-activate-venv tmpdir))
       (should (equal post-activate-venv tmpdir))
