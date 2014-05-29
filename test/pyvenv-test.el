@@ -1,3 +1,7 @@
+(ert-deftest pyvenv-mode ()
+  "Check that pyvenv-mode actually works."
+  (pyvenv-mode 1))
+
 (ert-deftest pyvenv-activate ()
   "`pyvenv-activate' should set the correct variables."
   (with-temp-virtualenv tmpdir
