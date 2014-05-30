@@ -79,6 +79,16 @@ When `pyvenv-mode' is enabled, pyvenv will switch to this
 virtualenv. If a virtualenv is already enabled, it will ask first.")
 (put 'pyvenv-workon 'safe-local-variable #'stringp)
 
+(defvar pyvenv-activate nil
+  "A variable requesting a specific virtualenv directory path.
+
+This is meant to be set in file- or directory-local variables.
+
+When `pyvenv-mode' is enabled, pyvenv will switch to this
+virtualenv. If a virtualenv is already enabled, it will ask first.")
+(put 'pyvenv-activate 'safe-local-variable #'stringp)
+
+
 (defgroup pyvenv nil
   "Python Virtual Environment Interface."
   :prefix "pyvenv-"
@@ -214,8 +224,19 @@ Will show the current virtual env in the mode line, and respect a
     (remove-hook 'hack-local-variables-hook #'pyvenv-set-file-virtualenv))))
 
 (defun pyvenv-set-file-virtualenv ()
-  "If `pyvenv-workon' is set, switch to that virtual env."
+  "If `pyvenv-workon' or `pyvenv-activate` is set, switch to that
+virtual env. `pyvenv-activate` takes precedence over `pyvenv-workon` as
+it is more explicit."
   (cond
+   ;; Set our venv from the pyenv-activate variable
+   ((and pyvenv-activate (not pyvenv-virtual-env))
+    (pyvenv-activate pyvenv-activate))
+   ((and pyvenv-activate (not (equal pyvenv-activate pyvenv-virtual-env-name)))
+    (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
+                            pyvenv-activate pyvenv-virtual-env))
+      (pyvenv-activate pyvenv-activate)))
+
+   ;; Set our venv from the pyenv-workon variable
    ((and pyvenv-workon (not pyvenv-virtual-env))
     (pyvenv-workon pyvenv-workon))
    ((and pyvenv-workon (not (equal pyvenv-workon pyvenv-virtual-env-name)))
