@@ -3,15 +3,15 @@
 all: test
 
 test:
-	cask exec ert-runner
+	cask exec ert-runner --quiet
 
 test-all: test
-	EMACS=emacs-24.1 cask exec ert-runner
-	EMACS=emacs-24.2 cask exec ert-runner
-	EMACS=emacs-24.3 cask exec ert-runner
+	EMACS=emacs-24.1 cask exec ert-runner --quiet
+	EMACS=emacs-24.2 cask exec ert-runner --quiet
+	EMACS=emacs-24.3 cask exec ert-runner --quiet
 
 cask:
-	cask install
-	EMACS=emacs-24.1 cask install
-	EMACS=emacs-24.2 cask install
-	EMACS=emacs-24.3 cask install
+	cask
+	EMACS=emacs-24.1 cask
+	EMACS=emacs-24.2 cask
+	EMACS=emacs-24.3 cask

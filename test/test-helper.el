@@ -3,6 +3,11 @@
 (require 'pyvenv)
 (require 'mocker)
 
+;; Fixing a bug in dflet where it would not work in 24.3.1 for some
+;; reason.
+(when (version= emacs-version "24.3.1")
+  (require 'cl))
+
 (defmacro with-temp-dir (name &rest body)
   (let ((var (make-symbol "temp-dir")))
     `(let* ((,var (make-temp-file "pyvenv-test-" t))

@@ -216,33 +216,34 @@ Will show the current virtual env in the mode line, and respect a
   :global t
   (cond
    (pyvenv-mode
-    (add-to-list 'mode-line-misc-info pyvenv-mode-line-indicator)
+    (add-to-list 'mode-line-misc-info '(pyvenv-mode pyvenv-mode-line-indicator))
     (add-hook 'hack-local-variables-hook #'pyvenv-set-file-virtualenv))
    ((not pyvenv-mode)
-    (setq mode-line-misc-info (delete pyvenv-mode-line-indicator
+    (setq mode-line-misc-info (delete '(pyvenv-mode pyvenv-mode-line-indicator)
                                       mode-line-misc-info))
     (remove-hook 'hack-local-variables-hook #'pyvenv-set-file-virtualenv))))
 
 (defun pyvenv-set-file-virtualenv ()
-  "If `pyvenv-workon' or `pyvenv-activate` is set, switch to that
-virtual env. `pyvenv-activate` takes precedence over `pyvenv-workon` as
-it is more explicit."
+  "If `pyvenv-workon' or `pyvenv-activate' is set, switch to that
+virtual env. If both are specified, `pyvenv-activate' takes
+precedence over `pyvenv-workon'."
   (cond
-   ;; Set our venv from the pyenv-activate variable
-   ((and pyvenv-activate (not pyvenv-virtual-env))
-    (pyvenv-activate pyvenv-activate))
-   ((and pyvenv-activate (not (equal pyvenv-activate pyvenv-virtual-env-name)))
-    (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
-                            pyvenv-activate pyvenv-virtual-env))
-      (pyvenv-activate pyvenv-activate)))
-
-   ;; Set our venv from the pyenv-workon variable
-   ((and pyvenv-workon (not pyvenv-virtual-env))
-    (pyvenv-workon pyvenv-workon))
-   ((and pyvenv-workon (not (equal pyvenv-workon pyvenv-virtual-env-name)))
-    (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
-                            pyvenv-workon pyvenv-virtual-env))
-      (pyvenv-workon pyvenv-workon)))))
+   (pyvenv-activate
+    (cond
+     ((not pyvenv-virtual-env)
+      (pyvenv-activate pyvenv-activate))
+     ((not (equal pyvenv-activate pyvenv-virtual-env))
+      (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
+                              pyvenv-activate pyvenv-virtual-env))
+        (pyvenv-activate pyvenv-activate)))))
+   (pyvenv-workon
+    (cond
+     ((and pyvenv-workon (not pyvenv-virtual-env))
+      (pyvenv-workon pyvenv-workon))
+     ((not (equal pyvenv-workon pyvenv-virtual-env-name))
+      (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
+                              pyvenv-workon pyvenv-virtual-env-name))
+        (pyvenv-workon pyvenv-workon)))))))
 
 (defvar pyvenv-virtualenvwrapper-python
   (or (getenv "VIRTUALENVWRAPPER_PYTHON")
