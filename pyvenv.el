@@ -37,7 +37,52 @@
 
 (require 'json)
 
-;; API for other libraries or user customization.
+;; User customization
+
+(defgroup pyvenv nil
+  "Python Virtual Environment Interface."
+  :prefix "pyvenv-"
+  :group 'languages)
+
+(defcustom pyvenv-workon nil
+  "The intended virtualenv in the virtualenvwrapper directory.
+
+This is rarely useful to set globally. Rather, set this in file-
+or directory-local variables using \\[add-file-local-variable] or
+\\[add-dir-local-variable].
+
+When `pyvenv-mode' is enabled, pyvenv will switch to this
+virtualenv. If a virtualenv is already enabled, it will ask first."
+  :type 'pyvenv-workon
+  :safe #'stringp
+  :group 'pyvenv)
+
+(defcustom pyvenv-activate nil
+  "The intended virtualenv directory.
+
+This is rarely useful to set globally. Rather, set this in file-
+or directory-local variables using \\[add-file-local-variable] or
+\\[add-dir-local-variable].
+
+When `pyvenv-mode' is enabled, pyvenv will switch to this
+virtualenv. If a virtualenv is already enabled, it will ask first."
+  :type 'directory
+  :safe #'stringp
+  :group 'pyvenv)
+
+(defcustom pyvenv-virtualenvwrapper-python
+  (or (getenv "VIRTUALENVWRAPPER_PYTHON")
+      (executable-find "python"))
+  "The python process which has access to the virtualenvwrapper module.
+
+This should be $VIRTUALENVWRAPPER_PYTHON outside of Emacs, but
+virtualenvwrapper.sh does not export that variable. We make an
+educated guess, but that can be off."
+  :type '(file :must-match t)
+  :safe #'file-directory-p
+  :group 'pyvenv)
+
+;; API for other libraries
 
 (defvar pyvenv-virtual-env nil
   "The current virtual environment.
@@ -70,34 +115,9 @@ This is usually the base name of `pyvenv-virtual-env'.")
 
 `pyvenv-virtual-env' is still set.")
 
-(defvar pyvenv-workon nil
-  "A variable requesting a specific virtualenv.
-
-This is meant to be set in file- or directory-local variables.
-
-When `pyvenv-mode' is enabled, pyvenv will switch to this
-virtualenv. If a virtualenv is already enabled, it will ask first.")
-(put 'pyvenv-workon 'safe-local-variable #'stringp)
-
-(defvar pyvenv-activate nil
-  "A variable requesting a specific virtualenv directory path.
-
-This is meant to be set in file- or directory-local variables.
-
-When `pyvenv-mode' is enabled, pyvenv will switch to this
-virtualenv. If a virtualenv is already enabled, it will ask first.")
-(put 'pyvenv-activate 'safe-local-variable #'stringp)
-
-
-(defgroup pyvenv nil
-  "Python Virtual Environment Interface."
-  :prefix "pyvenv-"
-  :group 'languages)
-
-(defcustom pyvenv-mode-line-indicator '(pyvenv-virtual-env-name
-                                        ("[" pyvenv-virtual-env-name "] "))
-  "How `pyvenv-mode' will indicate the current environment in the mode line."
-  :group 'pyvenv)
+(defvar pyvenv-mode-line-indicator '(pyvenv-virtual-env-name
+                                     ("[" pyvenv-virtual-env-name "] "))
+  "How `pyvenv-mode' will indicate the current environment in the mode line.")
 
 ;; Internal code.
 
@@ -207,6 +227,26 @@ virtualenv. If a virtualenv is already enabled, it will ask first.")
                    (string-lessp (downcase a)
                                  (downcase b))))))
 
+(define-widget 'pyvenv-workon 'choice
+  "Select an available virtualenv from virtualenvwrapper."
+  :convert-widget (lambda (widget)
+                    (setq widget (widget-copy widget))
+                    (widget-put widget
+                                :args (cons '(const :tag "None" nil)
+                                            (mapcar (lambda (env)
+                                                      (list 'const env))
+                                                    (pyvenv-virtualenv-list))))
+                    (widget-types-convert-widget widget))
+  :prompt-value (lambda (widget prompt value unbound)
+                  (let ((name (completing-read
+                               prompt
+                               (cons "None"
+                                     (pyvenv-virtualenv-list))
+                               nil t)))
+                    (if (equal name "None")
+                        nil
+                      name))))
+
 ;;;###autoload
 (define-minor-mode pyvenv-mode
   "Global minor mode for pyvenv.
@@ -244,15 +284,6 @@ precedence over `pyvenv-workon'."
       (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
                               pyvenv-workon pyvenv-virtual-env-name))
         (pyvenv-workon pyvenv-workon)))))))
-
-(defvar pyvenv-virtualenvwrapper-python
-  (or (getenv "VIRTUALENVWRAPPER_PYTHON")
-      (executable-find "python"))
-  "The python process which has access to the virtualenvwrapper module.
-
-This should be $VIRTUALENVWRAPPER_PYTHON outside of Emacs, but
-virtualenvwrapper.sh does not export that variable, so we do not
-usually see it.")
 
 (defun pyvenv-run-virtualenvwrapper-hook (hook &rest args)
   "Run a virtualenvwrapper hook, and update the environment.
