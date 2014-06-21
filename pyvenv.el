@@ -1,10 +1,10 @@
 ;;; pyvenv.el --- Python virtual environment interface -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013  Jorgen Schaefer <contact@jorgenschaefer.de>
+;; Copyright (C) 2013, 2014  Jorgen Schaefer <contact@jorgenschaefer.de>
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: http://github.com/jorgenschaefer/pyvenv
-;; Version: 1.2
+;; Version: 1.3
 ;; Keywords: Python, Virtualenv, Tools
 
 ;; This program is free software; you can redistribute it and/or
