@@ -248,6 +248,31 @@ This is usually the base name of `pyvenv-virtual-env'.")
                         nil
                       name))))
 
+(defvar pyvenv-mode-map (make-sparse-keymap)
+  "The mode keymap for `pyvenv-mode'.")
+
+(easy-menu-define pyvenv-menu pyvenv-mode-map
+  "Pyvenv Menu"
+  '("Virtual Envs"
+    :visible pyvenv-mode
+    ("Workon"
+     :help "Activate a virtualenvwrapper environment"
+     :filter (lambda (&optional ignored)
+               (mapcar (lambda (venv)
+                         (vector venv `(pyvenv-workon ,venv)
+                                 :style 'radio
+                                 :selected `(equal pyvenv-virtual-env-name
+                                                   ,venv)))
+                       (pyvenv-virtualenv-list))))
+    ["Activate" pyvenv-activate
+     :help "Activate a virtual environment by directory"]
+    ["Deactivate" pyvenv-deactivate
+     :help "Deactivate the current virtual environment"
+     :active pyvenv-virtual-env
+     :suffix pyvenv-virtual-env-name]
+    ["Restart Python Processes" pyvenv-restart-python
+     :help "Restart all Python processes to use the current environment"]))
+
 ;;;###autoload
 (define-minor-mode pyvenv-mode
   "Global minor mode for pyvenv.
