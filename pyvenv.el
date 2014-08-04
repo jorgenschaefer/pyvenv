@@ -135,7 +135,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
   (setq directory (expand-file-name directory))
   (pyvenv-deactivate)
   (setq pyvenv-virtual-env directory
-        pyvenv-virtual-env-name (file-name-base directory))
+        pyvenv-virtual-env-name (file-name-nondirectory directory))
   ;; Preserve variables from being overwritten.
   (let ((old-exec-path exec-path)
         (old-process-environment process-environment))
