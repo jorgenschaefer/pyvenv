@@ -320,46 +320,45 @@ environment accordingly.
 
 CAREFUL! This will modify your `process-environment' and
 `exec-path'."
-  (when (getenv "VIRTUALENVWRAPPER_LOG_DIR")
-    (with-temp-buffer
-      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
-        (unwind-protect
-            (progn
-              (apply #'call-process
-                     pyvenv-virtualenvwrapper-python
-                     nil t nil
-                     "-c"
-                     "from virtualenvwrapper.hook_loader import main; main()"
-                     "--script" tmpfile
-                     (if (getenv "HOOK_VERBOSE_OPTION")
-                         (cons (getenv "HOOK_VERBOSE_OPTION")
-                               (cons hook args))
-                       (cons hook args)))
-              (call-process-shell-command
-               (format ". '%s' ; echo ; echo =-=-= ; python -c \"import os, json ; print json.dumps(dict(os.environ))\""
-                       tmpfile)
-               nil t nil))
-          (delete-file tmpfile)))
-      (goto-char (point-min))
-      (when (re-search-forward "\n=-=-=\n" nil t)
-        (let ((output (buffer-substring (point-min)
-                                        (match-beginning 0))))
-          (when (> (length output) 0)
-            (with-help-window "*Virtualenvwrapper Hook Output*"
-              (with-current-buffer "*Virtualenvwrapper Hook Output*"
-                (let ((inhibit-read-only t))
-                  (erase-buffer)
-                  (insert
-                   (format
-                    "Output from the virtualenvwrapper hook %s:\n\n"
-                    hook)
-                   output))))))
-        (dolist (binding (json-read))
-          (let ((env (format "%s=%s" (car binding) (cdr binding))))
-            (when (not (member env process-environment))
-              (setq process-environment (cons env process-environment))))
-          (when (eq (car binding) 'PATH)
-            (setq exec-path (split-string (cdr binding) ":"))))))))
+  (with-temp-buffer
+    (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
+      (unwind-protect
+          (progn
+            (apply #'call-process
+                   pyvenv-virtualenvwrapper-python
+                   nil t nil
+                   "-c"
+                   "from virtualenvwrapper.hook_loader import main; main()"
+                   "--script" tmpfile
+                   (if (getenv "HOOK_VERBOSE_OPTION")
+                       (cons (getenv "HOOK_VERBOSE_OPTION")
+                             (cons hook args))
+                     (cons hook args)))
+            (call-process-shell-command
+             (format ". '%s' ; echo ; echo =-=-= ; python -c \"import os, json ; print json.dumps(dict(os.environ))\""
+                     tmpfile)
+             nil t nil))
+        (delete-file tmpfile)))
+    (goto-char (point-min))
+    (when (re-search-forward "\n=-=-=\n" nil t)
+      (let ((output (buffer-substring (point-min)
+                                      (match-beginning 0))))
+        (when (> (length output) 0)
+          (with-help-window "*Virtualenvwrapper Hook Output*"
+            (with-current-buffer "*Virtualenvwrapper Hook Output*"
+              (let ((inhibit-read-only t))
+                (erase-buffer)
+                (insert
+                 (format
+                  "Output from the virtualenvwrapper hook %s:\n\n"
+                  hook)
+                 output))))))
+      (dolist (binding (json-read))
+        (let ((env (format "%s=%s" (car binding) (cdr binding))))
+          (when (not (member env process-environment))
+            (setq process-environment (cons env process-environment))))
+        (when (eq (car binding) 'PATH)
+          (setq exec-path (split-string (cdr binding) ":")))))))
 
 ;;;###autoload
 (defun pyvenv-restart-python ()
