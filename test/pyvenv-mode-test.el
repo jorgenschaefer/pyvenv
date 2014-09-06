@@ -5,7 +5,7 @@
     (should pyvenv-mode)
     (should (member '(pyvenv-mode pyvenv-mode-line-indicator)
                     mode-line-misc-info))
-    (should (memq #'pyvenv-set-file-virtualenv
+    (should (memq #'pyvenv-track-virtualenv
                   hack-local-variables-hook))))
 
 (ert-deftest pyvenv-mode-should-remove-functions ()
@@ -16,5 +16,5 @@
     (should-not pyvenv-mode)
     (should-not (memq '(pyvenv-mode pyvenv-mode-line-indicator)
                       mode-line-misc-info))
-    (should-not (memq #'pyvenv-set-file-virtualenv
+    (should-not (memq #'pyvenv-track-virtualenv
                       hack-local-variables-hook))))

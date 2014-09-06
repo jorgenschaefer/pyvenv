@@ -71,6 +71,16 @@ virtualenv. If a virtualenv is already enabled, it will ask first."
   :safe #'stringp
   :group 'pyvenv)
 
+(defcustom pyvenv-tracking-ask-before-change nil
+  "Non-nil means pyvenv will ask before automatically changing a virtualenv.
+
+This can happen when a new file is opened with a buffer-local
+value (from file-local or directory-local variables) for
+`pyvenv-workon' or `pyvenv-workon', or if `pyvenv-tracking-mode'
+is active, after every command."
+  :type 'boolean
+  :group 'pyvenv)
+
 (defcustom pyvenv-virtualenvwrapper-python
   (or (getenv "VIRTUALENVWRAPPER_PYTHON")
       (executable-find "python"))
@@ -278,39 +288,49 @@ This is usually the base name of `pyvenv-virtual-env'.")
 (define-minor-mode pyvenv-mode
   "Global minor mode for pyvenv.
 
-Will show the current virtual env in the mode line, and respect a
+Will show the current virtualenv in the mode line, and respect a
 `pyvenv-workon' setting in files."
   :global t
   (cond
    (pyvenv-mode
     (add-to-list 'mode-line-misc-info '(pyvenv-mode pyvenv-mode-line-indicator))
-    (add-hook 'hack-local-variables-hook #'pyvenv-set-file-virtualenv))
+    (add-hook 'hack-local-variables-hook #'pyvenv-track-virtualenv))
    ((not pyvenv-mode)
     (setq mode-line-misc-info (delete '(pyvenv-mode pyvenv-mode-line-indicator)
                                       mode-line-misc-info))
-    (remove-hook 'hack-local-variables-hook #'pyvenv-set-file-virtualenv))))
+    (remove-hook 'hack-local-variables-hook #'pyvenv-track-virtualenv))))
 
-(defun pyvenv-set-file-virtualenv ()
-  "If `pyvenv-workon' or `pyvenv-activate' is set, switch to that
-virtual env. If both are specified, `pyvenv-activate' takes
-precedence over `pyvenv-workon'."
+;;;###autoload
+(define-minor-mode pyvenv-tracking-mode
+  "Global minor mode to track the current virtualenv.
+
+When this mode is active, pyvenv will activate a buffer-specific
+virtualenv whenever the user switches to a buffer with a
+buffer-local `pyvenv-workon' or `pyvenv-activate' variable."
+  :global t
+  (if pyvenv-tracking-mode
+      (add-hook 'post-command-hook 'pyvenv-track-virtualenv)
+    (remove-hook 'post-command-hook 'pyvenv-track-virtualenv)))
+
+(defun pyvenv-track-virtualenv ()
+  "Set a virtualenv as specified for the current buffer.
+
+If either `pyvenv-activate' or `pyvenv-workon' are specified, and
+they specify a virtualenv different from the current one, switch
+to that virtualenv."
   (cond
    (pyvenv-activate
-    (cond
-     ((not pyvenv-virtual-env)
-      (pyvenv-activate pyvenv-activate))
-     ((not (equal pyvenv-activate pyvenv-virtual-env))
-      (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
-                              pyvenv-activate pyvenv-virtual-env))
-        (pyvenv-activate pyvenv-activate)))))
+    (when (and (not (equal pyvenv-activate pyvenv-virtual-env))
+               (or (not pyvenv-tracking-ask-before-change)
+                   (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
+                                     pyvenv-activate pyvenv-virtual-env))))
+      (pyvenv-activate pyvenv-activate)))
    (pyvenv-workon
-    (cond
-     ((and pyvenv-workon (not pyvenv-virtual-env))
-      (pyvenv-workon pyvenv-workon))
-     ((not (equal pyvenv-workon pyvenv-virtual-env-name))
-      (when (y-or-n-p (format "Switch to virtual env %s (currently %s)? "
-                              pyvenv-workon pyvenv-virtual-env-name))
-        (pyvenv-workon pyvenv-workon)))))))
+    (when (and (not (equal pyvenv-workon pyvenv-virtual-env-name))
+               (or (not pyvenv-tracking-ask-before-change)
+                   (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
+                                     pyvenv-workon pyvenv-virtual-env-name))))
+      (pyvenv-workon pyvenv-workon)))))
 
 (defun pyvenv-run-virtualenvwrapper-hook (hook &rest args)
   "Run a virtualenvwrapper hook, and update the environment.
@@ -378,7 +398,7 @@ CAREFUL! This will modify your `process-environment' and
           (goto-char (point-max))
           (insert "\n\n"
                   "###\n"
-                  (format "### Restarting in virtual env %s (%s)\n"
+                  (format "### Restarting in virtualenv %s (%s)\n"
                           pyvenv-virtual-env-name pyvenv-virtual-env)
                   "###\n"
                   "\n\n")
