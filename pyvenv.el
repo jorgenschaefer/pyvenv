@@ -335,7 +335,7 @@ CAREFUL! This will modify your `process-environment' and
                              (cons hook args))
                      (cons hook args)))
             (call-process-shell-command
-             (format ". '%s' ; echo ; echo =-=-= ; python -c \"import os, json ; print json.dumps(dict(os.environ))\""
+             (format ". '%s' ; echo ; echo =-=-= ; python -c \"import os, json ; print(json.dumps(dict(os.environ)))\""
                      tmpfile)
              nil t nil))
         (delete-file tmpfile)))
