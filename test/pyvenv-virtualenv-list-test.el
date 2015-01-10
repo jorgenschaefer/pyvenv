@@ -6,6 +6,7 @@
             (cons (format "WORKON_HOME=%s/does-not-exist" workon-home)
                   process-environment))
       (should-error (pyvenv-virtualenv-list))
+      (should (null (pyvenv-virtualenv-list t)))
       (setq process-environment
             (cons (format "WORKON_HOME=%s" workon-home)
                   (cdr process-environment)))

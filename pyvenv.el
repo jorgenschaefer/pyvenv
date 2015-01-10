@@ -222,38 +222,44 @@ This is usually the base name of `pyvenv-virtual-env'.")
                                  "~/.virtualenvs")
                              name))))
 
-(defun pyvenv-virtualenv-list ()
-  "Prompt the user for a name in $WORKON_HOME."
+(defun pyvenv-virtualenv-list (&optional noerror)
+  "Prompt the user for a name in $WORKON_HOME.
+
+If NOERROR is set, do not raise an error if WORKON_HOME is not
+configured."
   (let ((workon-home (or (getenv "WORKON_HOME")
                          "~/.virtualenvs"))
         (result nil))
-    (when (not (file-directory-p workon-home))
-      (error "Can't find a workon home directory, set $WORKON_HOME"))
-    (dolist (name (directory-files workon-home))
-      (when (or (file-exists-p (format "%s/%s/bin/activate"
-                                       workon-home name))
-                (file-exists-p (format "%s/%s/Scripts/activate.bat"
-                                       workon-home name)))
-        (setq result (cons name result))))
-    (sort result (lambda (a b)
-                   (string-lessp (downcase a)
-                                 (downcase b))))))
+    (if (not (file-directory-p workon-home))
+        (when (not noerror)
+          (error "Can't find a workon home directory, set $WORKON_HOME"))
+      (dolist (name (directory-files workon-home))
+        (when (or (file-exists-p (format "%s/%s/bin/activate"
+                                         workon-home name))
+                  (file-exists-p (format "%s/%s/Scripts/activate.bat"
+                                         workon-home name)))
+          (setq result (cons name result))))
+      (sort result (lambda (a b)
+                     (string-lessp (downcase a)
+                                   (downcase b)))))))
 
 (define-widget 'pyvenv-workon 'choice
   "Select an available virtualenv from virtualenvwrapper."
-  :convert-widget (lambda (widget)
-                    (setq widget (widget-copy widget))
-                    (widget-put widget
-                                :args (cons '(const :tag "None" nil)
-                                            (mapcar (lambda (env)
-                                                      (list 'const env))
-                                                    (pyvenv-virtualenv-list))))
-                    (widget-types-convert-widget widget))
+  :convert-widget
+  (lambda (widget)
+    (setq widget (widget-copy widget))
+    (widget-put widget
+                :args (cons '(const :tag "None" nil)
+                            (mapcar (lambda (env)
+                                      (list 'const env))
+                                    (pyvenv-virtualenv-list t))))
+    (widget-types-convert-widget widget))
+
   :prompt-value (lambda (widget prompt value unbound)
                   (let ((name (completing-read
                                prompt
                                (cons "None"
-                                     (pyvenv-virtualenv-list))
+                                     (pyvenv-virtualenv-list t))
                                nil t)))
                     (if (equal name "None")
                         nil
@@ -274,7 +280,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
                                  :style 'radio
                                  :selected `(equal pyvenv-virtual-env-name
                                                    ,venv)))
-                       (pyvenv-virtualenv-list))))
+                       (pyvenv-virtualenv-list t))))
     ["Activate" pyvenv-activate
      :help "Activate a virtual environment by directory"]
     ["Deactivate" pyvenv-deactivate
