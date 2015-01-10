@@ -167,7 +167,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
                               (format "PATH=%s" (mapconcat (lambda (x)
                                                              (or x "."))
                                                            exec-path
-                                                           (if (eq system-type 'windows-nt) ";" ":")))
+                                                           path-separator))
                               ;; No "=" means to unset
                               "PYTHONHOME")
                              process-environment)
