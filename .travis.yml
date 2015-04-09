@@ -3,7 +3,7 @@ env:
   - EVM_EMACS=emacs-24.1-bin
   - EVM_EMACS=emacs-24.2-bin
   - EVM_EMACS=emacs-24.3-bin
-  # - EVM_EMACS=emacs-git-snapshot
+  - EVM_EMACS=emacs-24.4-bin
 before_install:
   - sudo mkdir /usr/local/evm
   - sudo chown $(id -u):$(id -g) /usr/local/evm
@@ -14,4 +14,4 @@ before_install:
   - export PATH="$HOME/.cask/bin:$PATH"
   - cask
 script:
-  - cask exec ert-runner
+  - make test
