@@ -14,6 +14,7 @@ test-all: clean cask
 	EMACS=emacs-24.2 cask exec ert-runner --quiet
 	EMACS=emacs-24.3 cask exec ert-runner --quiet
 	EMACS=emacs-24.4 cask exec ert-runner --quiet
+	EMACS=emacs-24.5 cask exec ert-runner --quiet
 
 cask:
 	cask install
@@ -21,6 +22,7 @@ cask:
 	EMACS=emacs-24.2 cask install
 	EMACS=emacs-24.3 cask install
 	EMACS=emacs-24.4 cask install
+	EMACS=emacs-24.5 cask install
 
 compile:
 	$(EMACS) -batch -L . -f batch-byte-compile *.el
