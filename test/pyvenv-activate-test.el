@@ -20,6 +20,8 @@
       (should (equal post-activate-venv tmpdir))
       (should (equal pyvenv-virtual-env tmpdir))
       (should (equal pyvenv-virtual-env-name (file-name-base tmpdir)))
+      (should (equal python-shell-virtualenv-path tmpdir))
+      (should (equal python-shell-virtualenv-root tmpdir))
       (should (equal (getenv "VIRTUAL_ENV")
                      tmpdir))
       (should (string-match (format "^%s/bin" (regexp-quote tmpdir))

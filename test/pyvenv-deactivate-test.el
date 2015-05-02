@@ -32,4 +32,6 @@
         (should (equal process-environment orig-process-environment))
         (should (equal exec-path orig-exec-path))
         (should (equal pyvenv-virtual-env nil))
-        (should (equal pyvenv-virtual-env-name nil))))))
+        (should (equal pyvenv-virtual-env-name nil))
+        (should (equal python-shell-virtualenv-root nil))
+        (should (equal python-shell-virtualenv-path nil))))))

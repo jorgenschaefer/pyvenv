@@ -145,7 +145,9 @@ This is usually the base name of `pyvenv-virtual-env'.")
   (setq directory (expand-file-name directory))
   (pyvenv-deactivate)
   (setq pyvenv-virtual-env directory
-        pyvenv-virtual-env-name (file-name-nondirectory directory))
+        pyvenv-virtual-env-name (file-name-nondirectory directory)
+        python-shell-virtualenv-path directory
+        python-shell-virtualenv-root directory)
   ;; Preserve variables from being overwritten.
   (let ((old-exec-path exec-path)
         (old-process-environment process-environment))
@@ -200,7 +202,9 @@ This is usually the base name of `pyvenv-virtual-env'.")
               process-environment old-process-environment)))
     (run-hooks 'pyvenv-post-deactivate-hooks))
   (setq pyvenv-virtual-env nil
-        pyvenv-virtual-env-name nil))
+        pyvenv-virtual-env-name nil
+        python-shell-virtualenv-root nil
+        python-shell-virtualenv-path nil))
 
 (defvar pyvenv-workon-history nil
   "Prompt history for `pyvenv-workon'.")
