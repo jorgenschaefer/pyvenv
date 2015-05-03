@@ -4,7 +4,7 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: http://github.com/jorgenschaefer/pyvenv
-;; Version: 1.6
+;; Version: 1.7
 ;; Keywords: Python, Virtualenv, Tools
 
 ;; This program is free software; you can redistribute it and/or
