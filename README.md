@@ -1,6 +1,7 @@
 # pyvenv.el, Python virtual environment support for Emacs
 
-![Travis-CI Build Status](https://secure.travis-ci.org/jorgenschaefer/pyvenv.png "Travis-CI Build Status")
+![Travis-CI Build Status](https://secure.travis-ci.org/jorgenschaefer/pyvenv.png)
+[![MELPA Stable](http://stable.melpa.org/packages/pyvenv-badge.svg)](http://stable.melpa.org/#/pyvenv)
 
 This is a simple global minor mode which will replicate the changes
 done by virtualenv activation inside Emacs.
