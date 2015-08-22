@@ -144,8 +144,9 @@ This is usually the base name of `pyvenv-virtual-env'.")
   (interactive "DActivate venv: ")
   (setq directory (expand-file-name directory))
   (pyvenv-deactivate)
-  (setq pyvenv-virtual-env directory
-        pyvenv-virtual-env-name (file-name-nondirectory directory)
+  (setq pyvenv-virtual-env (file-name-as-directory directory)
+        pyvenv-virtual-env-name (file-name-nondirectory
+                                 (directory-file-name directory))
         python-shell-virtualenv-path directory
         python-shell-virtualenv-root directory)
   ;; Preserve variables from being overwritten.
