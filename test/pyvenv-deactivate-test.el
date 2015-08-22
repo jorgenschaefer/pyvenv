@@ -15,8 +15,8 @@
     (with-temp-virtualenv venv1
       (pyvenv-activate venv1)
       (pyvenv-deactivate)
-      (should (equal pre-deactivate-venv venv1))
-      (should (equal post-deactivate-venv venv1))
+      (should (f-same? pre-deactivate-venv venv1))
+      (should (f-same? post-deactivate-venv venv1))
       (should (equal process-environment orig-process-environment))
       (should (equal exec-path orig-exec-path))
       (should (equal pyvenv-virtual-env nil))
@@ -27,8 +27,8 @@
         (pyvenv-activate venv2)
         (pyvenv-deactivate)
         ;; Called for both, but the last one was for the second
-        (should (equal pre-deactivate-venv venv2))
-        (should (equal post-deactivate-venv venv2))
+        (should (f-same? pre-deactivate-venv venv2))
+        (should (f-same? post-deactivate-venv venv2))
         (should (equal process-environment orig-process-environment))
         (should (equal exec-path orig-exec-path))
         (should (equal pyvenv-virtual-env nil))
