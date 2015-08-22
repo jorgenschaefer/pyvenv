@@ -83,7 +83,8 @@ is active, after every command."
 
 (defcustom pyvenv-virtualenvwrapper-python
   (or (getenv "VIRTUALENVWRAPPER_PYTHON")
-      (executable-find "python"))
+      (executable-find "python")
+      "python")
   "The python process which has access to the virtualenvwrapper module.
 
 This should be $VIRTUALENVWRAPPER_PYTHON outside of Emacs, but
