@@ -352,7 +352,12 @@ CAREFUL! This will modify your `process-environment' and
 `exec-path'."
   (when (pyvenv-hook-dir)
     (with-temp-buffer
-      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
+      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-"))
+            ;; `call-process-shell-command' uses `shell-file-name',
+            ;; which can be bound to various shells with incompatible
+            ;; syntaxes. Avoid quoting hell by using the least likely
+            ;; to break. See #36
+            (shell-file-name "/bin/sh"))
         (unwind-protect
             (progn
               (apply #'call-process
