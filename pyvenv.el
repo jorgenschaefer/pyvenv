@@ -352,12 +352,7 @@ CAREFUL! This will modify your `process-environment' and
 `exec-path'."
   (when (pyvenv-hook-dir)
     (with-temp-buffer
-      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-"))
-            ;; `call-process-shell-command' uses `shell-file-name',
-            ;; which can be bound to various shells with incompatible
-            ;; syntaxes. Avoid quoting hell by using the least likely
-            ;; to break. See #36
-            (shell-file-name "/bin/sh"))
+      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
         (unwind-protect
             (progn
               (apply #'call-process
@@ -371,7 +366,7 @@ CAREFUL! This will modify your `process-environment' and
                                (cons hook args))
                        (cons hook args)))
               (call-process-shell-command
-               (format ". '%s' ; echo ; echo =-=-= ; python -c \"import os, json ; print(json.dumps(dict(os.environ)))\""
+               (format ". '%s' ; python -c 'import os, json; print(\"\\n=-=-=\"); print(json.dumps(dict(os.environ)))'"
                        tmpfile)
                nil t nil))
           (delete-file tmpfile)))
