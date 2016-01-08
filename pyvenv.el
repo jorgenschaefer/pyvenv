@@ -330,7 +330,8 @@ they specify a virtualenv different from the current one, switch
 to that virtualenv."
   (cond
    (pyvenv-activate
-    (when (and (not (equal pyvenv-activate pyvenv-virtual-env))
+    (when (and (not (equal (file-name-as-directory pyvenv-activate)
+                           pyvenv-virtual-env))
                (or (not pyvenv-tracking-ask-before-change)
                    (y-or-n-p (format "Switch to virtualenv %s (currently %s)"
                                      pyvenv-activate pyvenv-virtual-env))))
