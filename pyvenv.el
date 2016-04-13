@@ -391,7 +391,8 @@ CAREFUL! This will modify your `process-environment' and
             (when (not (member env process-environment))
               (setq process-environment (cons env process-environment))))
           (when (eq (car binding) 'PATH)
-            (setq exec-path (split-string (cdr binding) ":"))))))))
+            (setq exec-path (split-string (cdr binding)
+                                          path-separator))))))))
 
 ;;;###autoload
 (defun pyvenv-restart-python ()
