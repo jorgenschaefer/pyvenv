@@ -440,6 +440,40 @@ This is the value of $WORKON_HOME or ~/.virtualenvs."
   (or (getenv "WORKON_HOME")
       (expand-file-name "~/.virtualenvs")))
 
+(defun pyvenv-virtualenv-for-directory (directory)
+  "Return the virtualenv local to the directory."
+  (setq directory (file-name-as-directory
+                   (expand-file-name directory)))
+  (let ((directory-name (file-name-nondirectory
+                         (directory-file-name directory)))
+        (workon-home (file-name-as-directory
+                      (pyvenv-workon-home)))
+        (virtualenv-list (pyvenv-virtualenv-list t))
+        (virtualenv nil)
+        (result nil))
+    (catch 'break
+      (while (setq virtualenv (car virtualenv-list))
+        (let* ((virtualenv-directory (file-name-as-directory
+                                      (concat workon-home virtualenv)))
+               (virtualenv-project-file (concat virtualenv-directory ".project")))
+          (if (file-readable-p virtualenv-project-file)
+              (let ((virtualenv-project-list (mapcar
+                                              (lambda (line)
+                                                (replace-regexp-in-string
+                                                 (rx (or (: bos (* (any " \t\n")))
+                                                         (: (* (any " \t\n")) eos)))
+                                                 ""
+                                                 line))
+                                              (with-temp-buffer
+                                                (insert-file-contents virtualenv-project-file)
+                                                (split-string (buffer-string) "\n" t)))))
+                (if (member directory-name virtualenv-project-list)
+                    (throw 'break virtualenv)))))
+        (setq virtualenv-list (cdr virtualenv-list))))))
+
+(defun pyvenv-default-virtualenv ()
+  (pyvenv-virtualenv-for-directory default-directory))
+
 ;;; Compatibility
 
 (when (not (fboundp 'file-name-base))
