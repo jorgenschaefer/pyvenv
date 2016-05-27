@@ -162,9 +162,14 @@ This is usually the base name of `pyvenv-virtual-env'.")
         pyvenv-old-process-environment process-environment
         ;; For some reason, Emacs adds some directories to `exec-path'
         ;; but not to `process-environment'?
-        exec-path (if (file-exists-p (format "%s/Scripts" directory))
-                      (cons (format "%s/Scripts" directory) exec-path)
-                    (cons (format "%s/bin" directory) exec-path))
+        exec-path (append
+                   ;; Unix
+                   (when (file-exists-p (format "%s/bin" directory))
+                     (list (format "%s/bin" directory)))
+                   ;; Windows
+                   (when (file-exists-p (format "%s/Scripts" directory))
+                     (list (format "%s/Scripts" directory)))
+                   exec-path)
         process-environment (append
                              (list
                               (format "VIRTUAL_ENV=%s" directory)
