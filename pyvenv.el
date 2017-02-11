@@ -356,7 +356,7 @@ environment accordingly.
 
 CAREFUL! This will modify your `process-environment' and
 `exec-path'."
-  (when (pyvenv-hook-dir)
+  (when (pyvenv-virtualenvwrapper-supported)
     (with-temp-buffer
       (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
         (unwind-protect
@@ -377,7 +377,7 @@ CAREFUL! This will modify your `process-environment' and
                nil t nil))
           (delete-file tmpfile)))
       (goto-char (point-min))
-      (when (and (not (re-search-forward "ImportError: No module named '?virtualenvwrapper'?" nil t))
+      (when (and (not (re-search-forward "\\(ImportError\\|ModuleNotFoundError\\): No module named '?virtualenvwrapper'?" nil t))
                  (re-search-forward "\n=-=-=\n" nil t))
         (let ((output (buffer-substring (point-min)
                                         (match-beginning 0))))
@@ -439,6 +439,12 @@ back to the default of $WORKON_HOME or even just ~/.virtualenvs/."
 This is the value of $WORKON_HOME or ~/.virtualenvs."
   (or (getenv "WORKON_HOME")
       (expand-file-name "~/.virtualenvs")))
+
+(defun pyvenv-virtualenvwrapper-supported ()
+  "Return true iff virtualenvwrapper is supported.
+
+Right now, this just checks if WORKON_HOME is set."
+  (getenv "WORKON_HOME"))
 
 ;;; Compatibility
 
