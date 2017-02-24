@@ -158,29 +158,31 @@ This is usually the base name of `pyvenv-virtual-env'.")
       (setq exec-path old-exec-path
             process-environment old-process-environment)))
   (run-hooks 'pyvenv-pre-activate-hooks)
-  (setq pyvenv-old-exec-path exec-path
-        pyvenv-old-process-environment process-environment
-        ;; For some reason, Emacs adds some directories to `exec-path'
-        ;; but not to `process-environment'?
-        exec-path (append
-                   ;; Unix
-                   (when (file-exists-p (format "%s/bin" directory))
-                     (list (format "%s/bin" directory)))
-                   ;; Windows
-                   (when (file-exists-p (format "%s/Scripts" directory))
-                     (list (format "%s/Scripts" directory)))
-                   exec-path)
-        process-environment (append
-                             (list
-                              (format "VIRTUAL_ENV=%s" directory)
-                              (format "PATH=%s" (mapconcat (lambda (x)
-                                                             (or x "."))
-                                                           exec-path
-                                                           path-separator))
-                              ;; No "=" means to unset
-                              "PYTHONHOME")
-                             process-environment)
-        )
+  (let ((new-directories (append
+                          ;; Unix
+                          (when (file-exists-p (format "%s/bin" directory))
+                            (list (format "%s/bin" directory)))
+                          ;; Windows
+                          (when (file-exists-p (format "%s/Scripts" directory))
+                            (list (format "%s/Scripts" directory))))))
+    (setq pyvenv-old-exec-path exec-path
+          pyvenv-old-process-environment process-environment
+          ;; For some reason, Emacs adds some directories to `exec-path'
+          ;; but not to `process-environment'?
+          exec-path (append new-directories exec-path)
+          process-environment (append
+                               (list
+                                (format "VIRTUAL_ENV=%s" directory)
+                                (format "PATH=%s"
+                                        (mapconcat 'identity
+                                                   (append new-directories
+                                                           (split-string (getenv "PATH")
+                                                                         path-separator))
+                                                   path-separator))
+                                ;; No "=" means to unset
+                                "PYTHONHOME")
+                               process-environment)
+          ))
   (pyvenv-run-virtualenvwrapper-hook "post_activate")
   (run-hooks 'pyvenv-post-activate-hooks))
 
