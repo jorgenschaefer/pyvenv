@@ -362,12 +362,11 @@ CAREFUL! This will modify your `process-environment' and
     (with-temp-buffer
       (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
         (unwind-protect
-            (progn
+            (let ((default-directory (pyvenv-workon-home)))
               (apply #'call-process
                      pyvenv-virtualenvwrapper-python
                      nil t nil
-                     "-c"
-                     "from virtualenvwrapper.hook_loader import main; main()"
+                     "-m" "virtualenvwrapper.hook_loader"
                      "--script" tmpfile
                      (if (getenv "HOOK_VERBOSE_OPTION")
                          (cons (getenv "HOOK_VERBOSE_OPTION")
