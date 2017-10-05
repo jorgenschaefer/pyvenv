@@ -84,6 +84,8 @@ is active, after every command."
 (defcustom pyvenv-virtualenvwrapper-python
   (or (getenv "VIRTUALENVWRAPPER_PYTHON")
       (executable-find "python")
+      (executable-find "py")
+      (executable-find "pythonw")
       "python")
   "The python process which has access to the virtualenvwrapper module.
 
