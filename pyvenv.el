@@ -166,7 +166,12 @@ This is usually the base name of `pyvenv-virtual-env'.")
                             (list (format "%s/bin" directory)))
                           ;; Windows
                           (when (file-exists-p (format "%s/Scripts" directory))
-                            (list (format "%s/Scripts" directory))))))
+                            (list (format "%s/Scripts" directory)
+                                  ;; Apparently, some virtualenv
+                                  ;; versions on windows put the
+                                  ;; python.exe in the virtualenv root
+                                  ;; for some reason?
+                                  directory)))))
     (setq pyvenv-old-exec-path exec-path
           pyvenv-old-process-environment process-environment
           ;; For some reason, Emacs adds some directories to `exec-path'
