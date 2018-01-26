@@ -385,7 +385,7 @@ CAREFUL! This will modify your `process-environment' and
                nil t nil))
           (delete-file tmpfile)))
       (goto-char (point-min))
-      (when (and (not (re-search-forward "\\(ImportError\\|ModuleNotFoundError\\): No module named '?virtualenvwrapper'?" nil t))
+      (when (and (not (re-search-forward "No module named '?virtualenvwrapper'?" nil t))
                  (re-search-forward "\n=-=-=\n" nil t))
         (let ((output (buffer-substring (point-min)
                                         (match-beginning 0))))
