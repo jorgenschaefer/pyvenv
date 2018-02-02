@@ -36,6 +36,7 @@
 
 ;;; Code:
 
+(require 'eshell)
 (require 'json)
 
 ;; User customization
@@ -141,6 +142,9 @@ This is usually the base name of `pyvenv-virtual-env'.")
 (defvar pyvenv-old-exec-path nil
   "The old exec path before the last activate.")
 
+(defvar pyvenv-old-eshell-path nil
+  "The old eshell path before the last activate.")
+
 ;;;###autoload
 (defun pyvenv-activate (directory)
   "Activate the virtual environment in DIRECTORY."
@@ -154,10 +158,12 @@ This is usually the base name of `pyvenv-virtual-env'.")
         python-shell-virtualenv-root directory)
   ;; Preserve variables from being overwritten.
   (let ((old-exec-path exec-path)
+        (old-eshell-path eshell-path-env)
         (old-process-environment process-environment))
     (unwind-protect
         (pyvenv-run-virtualenvwrapper-hook "pre_activate" pyvenv-virtual-env)
       (setq exec-path old-exec-path
+            eshell-path-env old-eshell-path
             process-environment old-process-environment)))
   (run-hooks 'pyvenv-pre-activate-hooks)
   (let ((new-directories (append
@@ -173,10 +179,13 @@ This is usually the base name of `pyvenv-virtual-env'.")
                                   ;; for some reason?
                                   directory)))))
     (setq pyvenv-old-exec-path exec-path
+          pyvenv-old-eshell-path eshell-path-env
           pyvenv-old-process-environment process-environment
           ;; For some reason, Emacs adds some directories to `exec-path'
           ;; but not to `process-environment'?
           exec-path (append new-directories exec-path)
+          ;; set eshell path to same as exec-path
+          eshell-path-env (mapconcat 'identity exec-path ":")
           process-environment (append
                                (list
                                 (format "VIRTUAL_ENV=%s" directory)
@@ -206,15 +215,20 @@ This is usually the base name of `pyvenv-virtual-env'.")
   (when pyvenv-old-exec-path
     (setq exec-path pyvenv-old-exec-path
           pyvenv-old-exec-path nil))
+  (when pyvenv-old-eshell-path
+    (setq eshell-path-env pyvenv-old-eshell-path
+          pyvenv-old-eshell-path nil))
   (when pyvenv-virtual-env
     ;; Make sure this does not change `exec-path', as $PATH is
     ;; different
     (let ((old-exec-path exec-path)
+          (old-eshell-path eshell-path-env)
           (old-process-environment process-environment))
       (unwind-protect
           (pyvenv-run-virtualenvwrapper-hook "post_deactivate"
                                              pyvenv-virtual-env)
         (setq exec-path old-exec-path
+              eshell-path-env old-eshell-path
               process-environment old-process-environment)))
     (run-hooks 'pyvenv-post-deactivate-hooks))
   (setq pyvenv-virtual-env nil
