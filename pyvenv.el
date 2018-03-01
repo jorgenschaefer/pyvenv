@@ -110,6 +110,15 @@ Do not set this variable directly; use `pyvenv-activate' or
 
 This is usually the base name of `pyvenv-virtual-env'.")
 
+
+(defvar pyvenv-pre-create-hooks nil
+  "Hooks run before a virtual environment is created.")
+
+
+(defvar pyvenv-post-create-hooks nil
+  "Hooks run after a virtual environment is created.")
+
+
 (defvar pyvenv-pre-activate-hooks nil
   "Hooks run before a virtual environment is activated.
 
@@ -144,6 +153,23 @@ This is usually the base name of `pyvenv-virtual-env'.")
 
 (defvar pyvenv-old-eshell-path nil
   "The old eshell path before the last activate.")
+
+
+(defun pyvenv-create (venv-name python-executable)
+  "Create virtualenv.  VENV-NAME  PYTHON-EXECUTABLE."
+  (interactive (list
+                (read-from-minibuffer "* Enter name of virtual environment: ")
+                (read-file-name "* Enter path of python interpreter: "
+                                (executable-find "python") "python" nil "python")))
+  (let ((venv-dir))
+    (setq venv-dir (concat (file-name-as-directory (pyvenv-workon-home))
+                           venv-name))
+    (unless (file-exists-p venv-dir)
+      (run-hooks 'pyvenv-pre-create-hooks)
+      (call-process "virtualenv" nil "*virtualenv" t "-p" python-executable venv-dir)
+      (run-hooks 'pyvenv-post-create-hooks))
+    (pyvenv-activate venv-dir)))
+
 
 ;;;###autoload
 (defun pyvenv-activate (directory)
