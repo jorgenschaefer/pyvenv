@@ -268,6 +268,8 @@ configured."
       (dolist (name (directory-files workon-home))
         (when (or (file-exists-p (format "%s/%s/bin/activate"
                                          workon-home name))
+		  (file-exists-p (format "%s/%s/bin/python"
+					 workon-home name))
                   (file-exists-p (format "%s/%s/Scripts/activate.bat"
                                          workon-home name)))
           (setq result (cons name result))))
