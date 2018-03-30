@@ -27,10 +27,6 @@ cask:
 compile:
 	$(EMACS) -batch -L . -f batch-byte-compile *.el
 
-release: clean test-all
-	mkdir -p "dist"
-	cp pyvenv.el "dist/pyvenv-$(VERSION).el"
-
 clean:
 	rm -rf .cask dist
 	find -name '*.elc' -delete
