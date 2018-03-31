@@ -104,7 +104,6 @@ educated guess, but that can be off."
   virtualenv hooks. Useful if you use a non-POSIX shell (e.g.
   fish)."
   :type '(file :must-match t)
-  :safe #'file-directory-p
   :group 'pyvenv)
 
 ;; API for other libraries
@@ -278,8 +277,8 @@ configured."
       (dolist (name (directory-files workon-home))
         (when (or (file-exists-p (format "%s/%s/bin/activate"
                                          workon-home name))
-		  (file-exists-p (format "%s/%s/bin/python"
-					 workon-home name))
+                  (file-exists-p (format "%s/%s/bin/python"
+                                         workon-home name))
                   (file-exists-p (format "%s/%s/Scripts/activate.bat"
                                          workon-home name)))
           (setq result (cons name result))))
