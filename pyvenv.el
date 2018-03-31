@@ -97,6 +97,15 @@ educated guess, but that can be off."
   :safe #'file-directory-p
   :group 'pyvenv)
 
+(defcustom pyvenv-exec-shell
+  (or (executable-find "sh")
+      (executable-find "bash"))
+  "The path to a POSIX compliant shell to use for running
+  virtualenv hooks. Useful if you use a non-POSIX shell (e.g.
+  fish)."
+  :type '(file :must-match t)
+  :group 'pyvenv)
+
 ;; API for other libraries
 
 (defvar pyvenv-virtual-env nil
@@ -268,8 +277,8 @@ configured."
       (dolist (name (directory-files workon-home))
         (when (or (file-exists-p (format "%s/%s/bin/activate"
                                          workon-home name))
-		  (file-exists-p (format "%s/%s/bin/python"
-					 workon-home name))
+                  (file-exists-p (format "%s/%s/bin/python"
+                                         workon-home name))
                   (file-exists-p (format "%s/%s/Scripts/activate.bat"
                                          workon-home name)))
           (setq result (cons name result))))
@@ -383,7 +392,8 @@ CAREFUL! This will modify your `process-environment' and
 `exec-path'."
   (when (pyvenv-virtualenvwrapper-supported)
     (with-temp-buffer
-      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-")))
+      (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-"))
+            (shell-file-name pyvenv-exec-shell))
         (unwind-protect
             (let ((default-directory (pyvenv-workon-home)))
               (apply #'call-process
