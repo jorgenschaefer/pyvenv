@@ -99,7 +99,8 @@ educated guess, but that can be off."
 
 (defcustom pyvenv-exec-shell
   (or (executable-find "sh")
-      (executable-find "bash"))
+      (executable-find "bash")
+      shell-file-name)
   "The path to a POSIX compliant shell to use for running
   virtualenv hooks. Useful if you use a non-POSIX shell (e.g.
   fish)."
