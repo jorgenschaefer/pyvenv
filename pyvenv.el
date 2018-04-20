@@ -98,8 +98,8 @@ educated guess, but that can be off."
   :group 'pyvenv)
 
 (defcustom pyvenv-exec-shell
-  (or (executable-find "sh")
-      (executable-find "bash")
+  (or (executable-find "bash")
+      (executable-find "sh")
       shell-file-name)
   "The path to a POSIX compliant shell to use for running
   virtualenv hooks. Useful if you use a non-POSIX shell (e.g.
