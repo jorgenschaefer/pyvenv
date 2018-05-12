@@ -176,8 +176,10 @@ This is usually the base name of `pyvenv-virtual-env'.")
                           venv-name)))
     (unless (file-exists-p venv-dir)
       (run-hooks 'pyvenv-pre-create-hooks)
-      (call-process "virtualenv" nil "*virtualenv" t
-                    "-p" python-executable venv-dir)
+      (with-current-buffer (generate-new-buffer "*virtualenv*")
+        (call-process "virtualenv" nil t t
+                      "-p" python-executable venv-dir)
+        (display-buffer (current-buffer)))
       (run-hooks 'pyvenv-post-create-hooks))
     (pyvenv-activate venv-dir)))
 
