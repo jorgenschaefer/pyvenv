@@ -310,6 +310,8 @@ configured."
                   (file-exists-p (format "%s/%s/bin/python"
                                          workon-home name))
                   (file-exists-p (format "%s/%s/Scripts/activate.bat"
+                                         workon-home name))
+                  (file-exists-p (format "%s/%s/python.exe"
                                          workon-home name)))
           (setq result (cons name result))))
       (sort result (lambda (a b)
