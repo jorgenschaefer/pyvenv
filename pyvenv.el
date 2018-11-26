@@ -285,9 +285,19 @@ This is usually the base name of `pyvenv-virtual-env'.")
 (defvar pyvenv-workon-history nil
   "Prompt history for `pyvenv-workon'.")
 
+(defun pyvenv--already-activated (name)
+  "Determine if the virtual environment NAME is already activated."
+  (and (boundp 'pyvenv-virtual-env-name)
+       (equal pyvenv-virtual-env-name name)))
+
 ;;;###autoload
-(defun pyvenv-workon (name)
-  "Activate a virtual environment from $WORKON_HOME."
+(defun pyvenv-workon (name &optional use-existing)
+  "Activate a virtual environment from $WORKON_HOME.
+
+If USE-EXISTING is true and the virtual environment NAME is
+already active, this function does not try to reactivate the
+environment.
+"
   (interactive
    (list
     (completing-read "Work on: " (pyvenv-virtualenv-list)
@@ -297,9 +307,11 @@ This is usually the base name of `pyvenv-virtual-env'.")
                  ;; default, see
                  ;; https://github.com/jorgenschaefer/elpy/issues/144
                  (equal name nil)))
-    (pyvenv-activate (format "%s/%s"
-                             (pyvenv-workon-home)
-                             name))))
+
+    (unless (and use-existing (pyvenv--already-activated name))
+      (pyvenv-activate (format "%s/%s"
+                               (pyvenv-workon-home)
+                               name)))))
 
 (defun pyvenv-virtualenv-list (&optional noerror)
   "Prompt the user for a name in $WORKON_HOME.
