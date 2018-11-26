@@ -290,8 +290,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
   "Activate a virtual environment from $WORKON_HOME.
 
 If the virtual environment NAME is already active, this function
-does not try to reactivate the environment.
-"
+does not try to reactivate the environment."
   (interactive
    (list
     (completing-read "Work on: " (pyvenv-virtualenv-list)
