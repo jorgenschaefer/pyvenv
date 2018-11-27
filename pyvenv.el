@@ -295,16 +295,10 @@ does not try to reactivate the environment."
    (list
     (completing-read "Work on: " (pyvenv-virtualenv-list)
                      nil t nil 'pyvenv-workon-history nil nil)))
-  (when (not (or (equal name "")
-                 ;; Some completion frameworks can return nil for the
-                 ;; default, see
-                 ;; https://github.com/jorgenschaefer/elpy/issues/144
-                 (equal name nil)))
-
-    (unless (equal pyvenv-virtual-env-name name)
-      (pyvenv-activate (format "%s/%s"
-                               (pyvenv-workon-home)
-                               name)))))
+  (unless (member name (list "" nil pyvenv-virtual-env-name))
+    (pyvenv-activate (format "%s/%s"
+                             (pyvenv-workon-home)
+                             name))))
 
 (defun pyvenv-virtualenv-list (&optional noerror)
   "Prompt the user for a name in $WORKON_HOME.
