@@ -231,7 +231,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
           ;; but not to `process-environment'?
           exec-path (append new-directories exec-path)
           ;; set eshell path to same as exec-path
-          eshell-path-env (mapconcat 'identity exec-path ":")
+          eshell-path-env (mapconcat 'identity exec-path path-separator)
           process-environment (append
                                (list
                                 (format "VIRTUAL_ENV=%s" directory)
