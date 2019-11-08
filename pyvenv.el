@@ -199,7 +199,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
   "Activate the virtual environment in DIRECTORY."
   (interactive "DActivate venv: ")
   (setq directory (expand-file-name directory))
-  (pyvenv-deactivate)
+  (ignore-errors (pyvenv-deactivate))
   (setq pyvenv-virtual-env (file-name-as-directory directory)
         pyvenv-virtual-env-name (file-name-nondirectory
                                  (directory-file-name directory))
