@@ -357,7 +357,7 @@ configured."
                                     (pyvenv-virtualenv-list t))))
     (widget-types-convert-widget widget))
 
-  :prompt-value (lambda (widget prompt value unbound)
+  :prompt-value (lambda (_widget prompt _value _unbound)
                   (let ((name (completing-read
                                prompt
                                (cons "None"
