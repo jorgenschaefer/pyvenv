@@ -235,11 +235,11 @@ This is usually the base name of `pyvenv-virtual-env'.")
   (run-hooks 'pyvenv-pre-activate-hooks)
   (let ((new-directories (append
                           ;; Unix
-                          (when (file-exists-p (format "%s/bin" directory))
-                            (list (format "%s/bin" directory)))
+                          (when (file-exists-p (expand-file-name "bin" directory))
+                            (list (expand-file-name "bin" directory)))
                           ;; Windows
-                          (when (file-exists-p (format "%s/Scripts" directory))
-                            (list (format "%s/Scripts" directory)
+                          (when (file-exists-p (expand-file-name "Scripts" directory))
+                            (list (expand-file-name "Scripts" directory)
                                   ;; Apparently, some virtualenv
                                   ;; versions on windows put the
                                   ;; python.exe in the virtualenv root
@@ -252,7 +252,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
           ;; but not to `process-environment'?
           exec-path (append new-directories exec-path)
           ;; set eshell path to same as exec-path
-          eshell-path-env (mapconcat 'identity exec-path ":")
+          eshell-path-env (mapconcat 'identity exec-path path-separator)
           process-environment (append
                                (list
                                 (format "VIRTUAL_ENV=%s" directory)
