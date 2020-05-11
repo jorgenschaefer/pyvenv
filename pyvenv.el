@@ -122,6 +122,12 @@ in `pyvenv-activate'."
 Do not set this variable directly; use `pyvenv-activate' or
 `pyvenv-workon'.")
 
+(defvar pyvenv-virtual-env-path-directories nil
+  "Directories added to PATH by the current virtual environment.
+
+Do not set this variable directly; use `pyvenv-activate' or
+`pyvenv-workon'.")
+
 (defvar pyvenv-virtual-env-name nil
   "The name of the current virtual environment.
 
@@ -163,13 +169,7 @@ This is usually the base name of `pyvenv-virtual-env'.")
 ;; Internal code.
 
 (defvar pyvenv-old-process-environment nil
-  "The old process environment before the last activate.")
-
-(defvar pyvenv-old-exec-path nil
-  "The old exec path before the last activate.")
-
-(defvar pyvenv-old-eshell-path nil
-  "The old eshell path before the last activate.")
+  "The old process environment that needs to be restored after deactivating the current environment.")
 
 
 (defun pyvenv-create (venv-name python-executable)
@@ -228,50 +228,16 @@ This is usually the base name of `pyvenv-virtual-env'.")
            (directory-file-name
             (file-name-directory
              (directory-file-name directory))))))
-  ;; Preserve variables from being overwritten.
-  (let ((old-exec-path exec-path)
-        (old-eshell-path eshell-path-env)
-        (old-process-environment process-environment))
-    (unwind-protect
-        (pyvenv-run-virtualenvwrapper-hook "pre_activate" pyvenv-virtual-env)
-      (setq exec-path old-exec-path
-            eshell-path-env old-eshell-path
-            process-environment old-process-environment)))
+  (pyvenv-run-virtualenvwrapper-hook "pre_activate" nil pyvenv-virtual-env)
   (run-hooks 'pyvenv-pre-activate-hooks)
-  (let ((new-directories (append
-                          ;; Unix
-                          (when (file-exists-p (format "%s/bin" directory))
-                            (list (format "%s/bin" directory)))
-                          ;; Windows
-                          (when (file-exists-p (format "%s/Scripts" directory))
-                            (list (format "%s/Scripts" directory)
-                                  ;; Apparently, some virtualenv
-                                  ;; versions on windows put the
-                                  ;; python.exe in the virtualenv root
-                                  ;; for some reason?
-                                  directory)))))
-    (setq pyvenv-old-exec-path exec-path
-          pyvenv-old-eshell-path eshell-path-env
-          pyvenv-old-process-environment process-environment
-          ;; For some reason, Emacs adds some directories to `exec-path'
-          ;; but not to `process-environment'?
-          exec-path (append new-directories exec-path)
-          ;; set eshell path to same as exec-path
-          eshell-path-env (mapconcat 'identity exec-path ":")
-          process-environment (append
-                               (list
-                                (format "VIRTUAL_ENV=%s" directory)
-                                (format "PATH=%s"
-                                        (mapconcat 'identity
-                                                   (append new-directories
-                                                           (split-string (getenv "PATH")
-                                                                         path-separator))
-                                                   path-separator))
-                                ;; No "=" means to unset
-                                "PYTHONHOME")
-                               process-environment)
-          ))
-  (pyvenv-run-virtualenvwrapper-hook "post_activate")
+  (setq pyvenv-virtual-env-path-directories (pyvenv--virtual-env-bin-dirs directory)
+        ;; Variables that must be reset during deactivation.
+        pyvenv-old-process-environment (list (cons "PYTHONHOME" (getenv "PYTHONHOME"))
+                                       (cons "VIRTUAL_ENV" nil)))
+  (setenv "VIRTUAL_ENV" directory)
+  (setenv "PYTHONHOME" nil)
+  (pyvenv--add-dirs-to-PATH pyvenv-virtual-env-path-directories)
+  (pyvenv-run-virtualenvwrapper-hook "post_activate" 'propagate-env)
   (run-hooks 'pyvenv-post-activate-hooks))
 
 ;;;###autoload
@@ -279,31 +245,19 @@ This is usually the base name of `pyvenv-virtual-env'.")
   "Deactivate any current virtual environment."
   (interactive)
   (when pyvenv-virtual-env
-    (pyvenv-run-virtualenvwrapper-hook "pre_deactivate")
-    (run-hooks 'pyvenv-pre-deactivate-hooks))
-  (when pyvenv-old-process-environment
-    (setq process-environment pyvenv-old-process-environment
-          pyvenv-old-process-environment nil))
-  (when pyvenv-old-exec-path
-    (setq exec-path pyvenv-old-exec-path
-          pyvenv-old-exec-path nil))
-  (when pyvenv-old-eshell-path
-    (setq eshell-path-env pyvenv-old-eshell-path
-          pyvenv-old-eshell-path nil))
-  (when pyvenv-virtual-env
-    ;; Make sure this does not change `exec-path', as $PATH is
-    ;; different
-    (let ((old-exec-path exec-path)
-          (old-eshell-path eshell-path-env)
-          (old-process-environment process-environment))
-      (unwind-protect
-          (pyvenv-run-virtualenvwrapper-hook "post_deactivate"
-                                             pyvenv-virtual-env)
-        (setq exec-path old-exec-path
-              eshell-path-env old-eshell-path
-              process-environment old-process-environment)))
+    (pyvenv-run-virtualenvwrapper-hook "pre_deactivate" 'propagate-env)
+    (run-hooks 'pyvenv-pre-deactivate-hooks)
+    (pyvenv--remove-dirs-from-PATH (pyvenv--virtual-env-bin-dirs pyvenv-virtual-env))
+    (dolist (envvar pyvenv-old-process-environment)
+      (setenv (car envvar) (cdr envvar)))
+    ;; Make sure PROPAGATE-ENV is nil here, so that it does not change
+    ;; `exec-path', as $PATH is different
+    (pyvenv-run-virtualenvwrapper-hook "post_deactivate"
+                                 nil
+                                 pyvenv-virtual-env)
     (run-hooks 'pyvenv-post-deactivate-hooks))
   (setq pyvenv-virtual-env nil
+        pyvenv-virtual-env-path-directories nil
         pyvenv-virtual-env-name nil
         python-shell-virtualenv-root nil
         python-shell-virtualenv-path nil))
@@ -446,14 +400,14 @@ to that virtualenv."
                                      pyvenv-workon pyvenv-virtual-env-name))))
       (pyvenv-workon pyvenv-workon)))))
 
-(defun pyvenv-run-virtualenvwrapper-hook (hook &rest args)
+(defun pyvenv-run-virtualenvwrapper-hook (hook &optional propagate-env &rest args)
   "Run a virtualenvwrapper hook, and update the environment.
 
 This will run a virtualenvwrapper hook and update the local
 environment accordingly.
 
-CAREFUL! This will modify your `process-environment' and
-`exec-path'."
+CAREFUL! If PROPAGATE-ENV is non-nil, this will modify your
+`process-environment' and `exec-path'."
   (when (pyvenv-virtualenvwrapper-supported)
     (with-temp-buffer
       (let ((tmpfile (make-temp-file "pyvenv-virtualenvwrapper-"))
@@ -470,32 +424,72 @@ CAREFUL! This will modify your `process-environment' and
                                (cons hook args))
                        (cons hook args)))
               (call-process-shell-command
-               (format ". '%s' ; python -c 'import os, json; print(\"\\n=-=-=\"); print(json.dumps(dict(os.environ)))'"
-                       tmpfile)
+               (mapconcat 'identity
+                          (list
+                           "python -c 'import os, json; print(json.dumps(dict(os.environ)))'"
+                           (format ". '%s'" tmpfile)
+                           "python -c 'import os, json; print(\"\\n=-=-=\"); print(json.dumps(dict(os.environ)))'")
+                          "; ")
                nil t nil))
           (delete-file tmpfile)))
       (goto-char (point-min))
-      (when (and (not (re-search-forward "No module named '?virtualenvwrapper'?" nil t))
-                 (re-search-forward "\n=-=-=\n" nil t))
-        (let ((output (buffer-substring (point-min)
-                                        (match-beginning 0))))
-          (when (> (length output) 0)
-            (with-help-window "*Virtualenvwrapper Hook Output*"
-              (with-current-buffer "*Virtualenvwrapper Hook Output*"
-                (let ((inhibit-read-only t))
-                  (erase-buffer)
-                  (insert
-                   (format
-                    "Output from the virtualenvwrapper hook %s:\n\n"
-                    hook)
-                   output))))))
-        (dolist (binding (json-read))
-          (let ((env (format "%s=%s" (car binding) (cdr binding))))
-            (when (not (member env process-environment))
-              (setq process-environment (cons env process-environment))))
-          (when (eq (car binding) 'PATH)
-            (setq exec-path (split-string (cdr binding)
-                                          path-separator))))))))
+      (when (not (re-search-forward "No module named '?virtualenvwrapper'?" nil t))
+        (let* ((env-before (json-read))
+               (hook-output-start-pos (point))
+               (hook-output-end-pos (when (re-search-forward "\n=-=-=\n" nil t)
+                                      (match-beginning 0)))
+               (env-after (when hook-output-end-pos (json-read))))
+          (when hook-output-end-pos
+            (let ((output (buffer-substring hook-output-start-pos
+                                            hook-output-end-pos)))
+              (when (> (length output) 0)
+                (with-help-window "*Virtualenvwrapper Hook Output*"
+                  (with-current-buffer "*Virtualenvwrapper Hook Output*"
+                    (let ((inhibit-read-only t))
+                      (erase-buffer)
+                      (insert
+                       (format
+                        "Output from the virtualenvwrapper hook %s:\n\n"
+                        hook)
+                       output))))))
+            (when propagate-env
+              (dolist (binding (pyvenv--env-diff (sort env-before (lambda (x y) (string-lessp (car x) (car y))))
+                                           (sort env-after (lambda (x y) (string-lessp (car x) (car y))))))
+                (setenv (car binding) (cdr binding))
+                (when (eq (car binding) 'PATH)
+                  (let ((new-path-elts (split-string (cdr binding)
+                                                     path-separator)))
+                    (setq exec-path new-path-elts)
+                    (setq-default eshell-path-env new-path-elts)))))))))))
+
+
+(defun pyvenv--env-diff (env-before env-after)
+  "Calculate diff between ENV-BEFORE alist and ENV-AFTER alist.
+
+Both ENV-BEFORE and ENV-AFTER must be sorted alists of (STR . STR)."
+  (let (env-diff)
+    (while (or env-before env-after)
+      (cond
+       ;; K-V are the same, both proceed to the next one.
+       ((equal (car-safe env-before) (car-safe env-after))
+        (setq env-before (cdr env-before)
+              env-after (cdr env-after)))
+
+       ;; env-after is missing one element: add (K-before . nil) to diff
+       ((and env-before (or (null env-after) (string-lessp (caar env-before)
+                                                           (caar env-after))))
+        (setq env-diff (cons (cons (caar env-before) nil) env-diff)
+              env-before (cdr env-before)))
+       ;; Otherwise: add env-after element to the diff, progress env-after,
+       ;; progress env-before only if keys matched.
+       (t
+        (setq env-diff (cons (car env-after) env-diff))
+        (when (equal (caar env-after) (caar env-before))
+          (setq env-before (cdr env-before)))
+        (setq env-after (cdr env-after)))))
+    (message "env-diff %S" env-diff)
+    (nreverse env-diff)))
+
 
 ;;;###autoload
 (defun pyvenv-restart-python ()
@@ -543,6 +537,68 @@ This is the value of $WORKON_HOME or ~/.virtualenvs."
 
 Right now, this just checks if WORKON_HOME is set."
   (getenv "WORKON_HOME"))
+
+(defun pyvenv--virtual-env-bin-dirs (virtual-env)
+  (let ((virtual-env (directory-file-name virtual-env)))
+   (append
+    ;; Unix
+    (when (file-exists-p (format "%s/bin" virtual-env))
+      (list (format "%s/bin" virtual-env)))
+    ;; Windows
+    (when (file-exists-p (format "%s/Scripts" virtual-env))
+      (list (format "%s/Scripts" virtual-env)
+            ;; Apparently, some virtualenv
+            ;; versions on windows put the
+            ;; python.exe in the virtualenv root
+            ;; for some reason?
+            virtual-env)))))
+
+(defun pyvenv--replace-once-destructive (list oldvalue newvalue)
+  "Replace one element equal to OLDVALUE with NEWVALUE values in LIST."
+  (let ((cur-elt list))
+    (while (and cur-elt (not (equal oldvalue (car cur-elt))))
+      (setq cur-elt (cdr cur-elt)))
+    (when cur-elt (setcar cur-elt newvalue))))
+
+(defun pyvenv--remove-many-once (values-to-remove list)
+  "Return a copy of LIST with each element from VALUES-TO-REMOVE removed once."
+  ;; Non-interned symbol is not eq to anything but itself.
+  (let ((values-to-remove (copy-sequence values-to-remove))
+        (sentinel (make-symbol "sentinel")))
+    (delq sentinel
+          (mapcar (lambda (x)
+                    (if (pyvenv--replace-once-destructive values-to-remove x sentinel)
+                        sentinel
+                      x))
+                  list))))
+
+(defun pyvenv--prepend-to-pathsep-string (values-to-prepend str)
+  "Prepend values from VALUES-TO-PREPEND list to path-delimited STR."
+  (mapconcat 'identity
+             (append values-to-prepend (split-string str path-separator))
+             path-separator))
+
+(defun pyvenv--remove-from-pathsep-string (values-to-remove str)
+  "Remove all values from VALUES-TO-REMOVE list from path-delimited STR."
+  (mapconcat 'identity
+             (pyvenv--remove-many-once values-to-remove (split-string str path-separator))
+             path-separator))
+
+(defun pyvenv--add-dirs-to-PATH (dirs-to-add)
+  "Add DIRS-TO-ADD to different variables related to execution paths."
+  (let* ((new-eshell-path-env (pyvenv--prepend-to-pathsep-string dirs-to-add (default-value 'eshell-path-env)))
+         (new-path-envvar (pyvenv--prepend-to-pathsep-string dirs-to-add (getenv "PATH"))))
+    (setq exec-path (append dirs-to-add exec-path))
+    (setq-default eshell-path-env new-eshell-path-env)
+    (setenv "PATH" new-path-envvar)))
+
+(defun pyvenv--remove-dirs-from-PATH (dirs-to-remove)
+  "Remove DIRS-TO-REMOVE from different variables related to execution paths."
+  (let* ((new-eshell-path-env (pyvenv--remove-from-pathsep-string dirs-to-remove (default-value 'eshell-path-env)))
+         (new-path-envvar (pyvenv--remove-from-pathsep-string dirs-to-remove (getenv "PATH"))))
+    (setq exec-path (pyvenv--remove-many-once dirs-to-remove exec-path))
+    (setq-default eshell-path-env new-eshell-path-env)
+    (setenv "PATH" new-path-envvar)))
 
 ;;; Compatibility
 

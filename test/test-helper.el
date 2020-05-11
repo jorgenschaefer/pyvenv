@@ -24,3 +24,14 @@
      (write-region "" nil (concat ,name "/bin/activate"))
      ,@body))
 (put 'with-temp-virtualenv 'lisp-indent-function 'defun)
+
+
+(defun canonicalize-environment (process-environment-list)
+  "Prepare PROCESS-ENVIRONMENT-LIST variable for comparison."
+  (let (result)
+    ;; Dedupe by var name.
+    (mapc (lambda (x) (cl-pushnew (split-string x "=") result :key 'car :test 'equal))
+          process-environment)
+    ;; Delete vars that were unset, and sort the result.
+    (sort (cl-delete-if-not 'cdr result)
+          (lambda (x y) (string-lessp (car x) (car y))))))
