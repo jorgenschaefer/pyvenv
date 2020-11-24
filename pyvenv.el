@@ -176,9 +176,13 @@ This is usually the base name of `pyvenv-virtual-env'.")
   "Create virtualenv.  VENV-NAME  PYTHON-EXECUTABLE."
   (interactive (list
                 (read-from-minibuffer "Name of virtual environment: ")
-                (read-file-name "Python interpreter to use: "
-                                (file-name-directory (executable-find "python"))
-                                nil nil "python")))
+                (let ((dir (if pyvenv-virtualenvwrapper-python
+                               (file-name-directory pyvenv-virtualenvwrapper-python)
+                             nil))
+                      (initial (if pyvenv-virtualenvwrapper-python
+                                   (file-name-base pyvenv-virtualenvwrapper-python)
+                                 nil)))
+                  (read-file-name "Python interpreter to use: " dir nil nil initial))))
   (let ((venv-dir (concat (file-name-as-directory (pyvenv-workon-home))
                           venv-name)))
     (unless (file-exists-p venv-dir)
