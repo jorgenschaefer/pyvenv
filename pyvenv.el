@@ -426,9 +426,12 @@ CAREFUL! If PROPAGATE-ENV is non-nil, this will modify your
               (call-process-shell-command
                (mapconcat 'identity
                           (list
-                           "python -c 'import os, json; print(json.dumps(dict(os.environ)))'"
+                           (format "%s -c 'import os, json; print(json.dumps(dict(os.environ)))'"
+                                   pyvenv-virtualenvwrapper-python)
                            (format ". '%s'" tmpfile)
-                           "python -c 'import os, json; print(\"\\n=-=-=\"); print(json.dumps(dict(os.environ)))'")
+                           (format
+                            "%s -c 'import os, json; print(\"\\n=-=-=\"); print(json.dumps(dict(os.environ)))'"
+                            pyvenv-virtualenvwrapper-python))
                           "; ")
                nil t nil))
           (delete-file tmpfile)))
