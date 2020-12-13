@@ -38,6 +38,7 @@
 
 (require 'eshell)
 (require 'json)
+(require 'subr-x)
 
 ;; User customization
 
@@ -444,8 +445,8 @@ CAREFUL! If PROPAGATE-ENV is non-nil, this will modify your
                                       (match-beginning 0)))
                (env-after (when hook-output-end-pos (json-read))))
           (when hook-output-end-pos
-            (let ((output (buffer-substring hook-output-start-pos
-                                            hook-output-end-pos)))
+            (let ((output (string-trim (buffer-substring hook-output-start-pos
+                                            hook-output-end-pos))))
               (when (> (length output) 0)
                 (with-help-window "*Virtualenvwrapper Hook Output*"
                   (with-current-buffer "*Virtualenvwrapper Hook Output*"
