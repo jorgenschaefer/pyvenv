@@ -492,7 +492,6 @@ Both ENV-BEFORE and ENV-AFTER must be sorted alists of (STR . STR)."
         (when (equal (caar env-after) (caar env-before))
           (setq env-before (cdr env-before)))
         (setq env-after (cdr env-after)))))
-    (message "env-diff %S" env-diff)
     (nreverse env-diff)))
 
 
