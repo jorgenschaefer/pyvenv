@@ -6,7 +6,10 @@ env:
   - EVM_EMACS=emacs-26.3-travis-linux-xenial
   - EVM_EMACS=emacs-27.1-travis-linux-xenial
 before_install:
-  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > travis.sh && source ./travis.sh
+  - git clone https://github.com/cask/cask ~/.cask
+  - export PATH=$HOME/.cask/bin:$HOME/.evm/bin:$PATH
+  - git clone https://github.com/rejeep/evm.git /home/travis/.evm
+  - evm config path /tmp
   - evm install $EVM_EMACS --use --skip
   - cask
 script:
