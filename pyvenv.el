@@ -543,7 +543,10 @@ Right now, this just checks if WORKON_HOME is set."
   (getenv "WORKON_HOME"))
 
 (defun pyvenv--virtual-env-bin-dirs (virtual-env)
-  (let ((virtual-env (directory-file-name virtual-env)))
+  (let ((virtual-env
+	 (if (string= "/" (directory-file-name virtual-env))
+	     ""
+	   (directory-file-name virtual-env))))
    (append
     ;; Unix
     (when (file-exists-p (format "%s/bin" virtual-env))
