@@ -533,8 +533,9 @@ back to the default of $WORKON_HOME or even just ~/.virtualenvs/."
   "Return the current workon home.
 
 This is the value of $WORKON_HOME or ~/.virtualenvs."
-  (or (getenv "WORKON_HOME")
-      (expand-file-name "~/.virtualenvs")))
+  (expand-file-name
+   (or (getenv "WORKON_HOME")
+       "~/.virtualenvs")))
 
 (defun pyvenv-virtualenvwrapper-supported ()
   "Return true iff virtualenvwrapper is supported.
